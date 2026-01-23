@@ -538,17 +538,33 @@
         let wordStats = new Map();
         let currentWord = null;
         let synth = window.speechSynthesis;
+        let voices = [];
+        let speechReady = false;
 
-        // Encouraging messages
+        // Initialize speech synthesis voices
+        function initVoices() {
+            voices = synth.getVoices();
+            if (voices.length > 0) {
+                speechReady = true;
+            }
+        }
+
+        // Load voices (they may not be immediately available)
+        initVoices();
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = initVoices;
+        }
+
+        // Encouraging messages (shown periodically as hints, not success feedback)
         const encouragingMessages = [
-            "You're doing great! Keep going! 🌟",
-            "Fantastic effort! You've got this! 💪",
-            "You're a spelling superstar! ⭐",
-            "Way to go! Keep up the amazing work! 🎨",
-            "You're learning so much! Awesome! 🚀",
-            "Great job! You're getting better! 🎯",
-            "Keep it up! You're doing wonderful! 🌈",
-            "Excellent work! Stay focused! 🎪"
+            "Take your time! 🌟",
+            "Sound it out slowly! 💪",
+            "You can do this! 🎯",
+            "Focus and try your best! 🌈",
+            "Listen to the word again if you need to! 🔊",
+            "Break the word into parts! 🧩",
+            "Think about how it sounds! 🎵",
+            "Remember to check your spelling! 📝"
         ];
 
         const firstTryMessages = [
@@ -559,29 +575,87 @@
             "Outstanding! Got it right away! 🏆"
         ];
 
-        // Context sentence templates
-        const sentenceTemplates = [
-            "The _____ was very interesting to learn about.",
-            "I saw a _____ at the park today.",
-            "My teacher explained what _____ means.",
-            "The story had a _____ in it.",
-            "We learned about _____ in class.",
-            "I found a _____ in my backyard.",
-            "The _____ made everyone smile.",
-            "My friend showed me a _____ yesterday.",
-            "The book described a _____ in detail.",
-            "I want to learn more about _____.",
-            "The _____ was beautiful to see.",
-            "We talked about _____ during lunch.",
-            "My family visited a place with _____.",
-            "The _____ helped solve the problem.",
-            "I read about _____ in my favorite book.",
-            "The _____ surprised everyone.",
-            "We saw _____ on our field trip.",
-            "The _____ was part of the science lesson.",
-            "I wrote a story about _____.",
-            "The _____ appeared in my dream last night."
-        ];
+        // Word-specific context sentences - provides meaningful clues about the word
+        const wordContexts = {
+            // Common spelling words with descriptive sentences
+            "beautiful": "The sunset was absolutely _____, with orange and pink colors painting the sky.",
+            "because": "I brought my umbrella _____ the weather forecast said it would rain.",
+            "believe": "Do you _____ in magic and fairy tales?",
+            "friend": "My best _____ and I play together at recess every day.",
+            "through": "The rabbit ran _____ the hole in the fence to escape.",
+            "their": "The students put _____ backpacks in the cubbies.",
+            "there": "Look over _____! I can see the rainbow!",
+            "they're": "_____ going to the movies after school today.",
+            "would": "I _____ like some ice cream, please.",
+            "could": "She _____ run faster than anyone else in her class.",
+            "should": "You _____ always brush your teeth before bed.",
+            "again": "Can we play that fun game _____?",
+            "against": "Our team played _____ the champions and won!",
+            "different": "Each snowflake is _____ from all the others.",
+            "thought": "I _____ about what to write in my story.",
+            "brought": "She _____ cupcakes to share with the whole class.",
+            "bought": "Mom _____ new shoes at the store yesterday.",
+            "caught": "The baseball player _____ the ball and made an amazing out!",
+            "taught": "My grandmother _____ me how to bake cookies.",
+            "enough": "Do we have _____ pizza for everyone at the party?",
+            "although": "_____ it was raining, we still had fun playing inside.",
+            "together": "Let's work _____ to solve this puzzle.",
+            "favorite": "Pizza is my _____ food to eat for dinner.",
+            "special": "Today is a _____ day because it's my birthday!",
+            "finally": "After waiting all week, the package _____ arrived!",
+            "usually": "I _____ wake up at seven o'clock on school days.",
+            "probably": "It will _____ snow tomorrow based on the cold weather.",
+            "especially": "I love all fruits, _____ strawberries and watermelon.",
+            "important": "It's _____ to listen carefully to the teacher.",
+            "interesting": "The book about dinosaurs was very _____.",
+            "remember": "Do you _____ what happened in the story?",
+            "surprise": "We planned a birthday _____ party for Dad!",
+            "Wednesday": "We have art class every _____.",
+            "February": "Valentine's Day is in the month of _____.",
+            "beginning": "At the _____ of the movie, the hero was just a kid.",
+            "believe": "I _____ you can do anything you set your mind to!",
+            "receive": "Did you _____ my letter in the mail?",
+            "separate": "Please _____ the colored blocks from the white ones.",
+            "necessary": "Water is _____ for all living things to survive.",
+            "immediately": "When the fire alarm rang, we left the building _____.",
+            "occasionally": "We _____ go out for ice cream as a treat.",
+            "environment": "We should protect the _____ by recycling.",
+            "temperature": "The _____ outside is very cold today, so wear a coat.",
+            "government": "The _____ makes laws to keep people safe.",
+            "knowledge": "Reading books helps you gain _____.",
+            "experience": "Going to camp was an amazing _____.",
+            "calendar": "I marked the party date on my _____.",
+            "library": "We borrowed books from the _____ yesterday.",
+            "restaurant": "Our family ate dinner at a nice _____ last night.",
+            "accident": "The car _____ blocked traffic on the highway.",
+            "disappear": "The magician made the rabbit _____ into thin air!",
+            "embarrass": "Please don't _____ me in front of my friends.",
+            "exaggerate": "Don't _____ — tell me exactly what happened.",
+            "guarantee": "I _____ this will be the best party ever!",
+            "occurred": "The thunderstorm _____ late in the afternoon.",
+            "recommend": "I _____ this book — it's really exciting!",
+            "rhythm": "The drummer kept a steady _____ throughout the song.",
+            "schedule": "Check the _____ to see when the bus arrives.",
+            "vacuum": "Mom asked me to _____ the living room carpet.",
+            "weird": "That was a _____ noise — what could it be?"
+        };
+
+        // Fallback sentence generator for words not in our dictionary
+        function generateFallbackSentence(word) {
+            // Try to create a somewhat helpful sentence based on word characteristics
+            const length = word.length;
+            const firstLetter = word[0].toUpperCase();
+            const underscores = '_'.repeat(length);
+
+            const fallbacks = [
+                `This ${length}-letter word starts with the letter "${firstLetter}": ${underscores}`,
+                `Can you spell this word that begins with "${firstLetter}"? ${underscores}`,
+                `Listen carefully and spell this ${length}-letter word: ${underscores}`,
+                `This word has ${length} letters and starts with "${firstLetter}": ${underscores}`
+            ];
+
+            return fallbacks[Math.floor(Math.random() * fallbacks.length)];
+        }
 
         // Initialize word stats
         function initializeWord(word) {
@@ -598,9 +672,16 @@
 
         // Generate context sentence with underscores
         function generateContextSentence(word) {
+            const lowerWord = word.toLowerCase();
             const underscores = '_'.repeat(word.length);
-            const template = sentenceTemplates[Math.floor(Math.random() * sentenceTemplates.length)];
-            return template.replace('_____', underscores);
+
+            // Check if we have a specific context for this word
+            if (wordContexts[lowerWord]) {
+                return wordContexts[lowerWord].replace('_____', underscores);
+            }
+
+            // Use fallback for unknown words
+            return generateFallbackSentence(word);
         }
 
         // Start Quiz
@@ -676,8 +757,11 @@
             // Clear encouragement
             document.getElementById('encouragement').textContent = '';
 
-            // Auto-speak the word
-            setTimeout(() => speakWord(), 300);
+            // Auto-speak the word (with a small delay for UI to settle)
+            // Note: Some browsers block auto-play, so the Listen button is always available
+            setTimeout(() => {
+                speakWord();
+            }, 300);
         }
 
         // Text-to-speech
@@ -692,6 +776,20 @@
             utterance.pitch = 1.1; // Slightly higher pitch for friendliness
             utterance.volume = 1;
 
+            // Try to select a good English voice
+            if (voices.length > 0) {
+                // Prefer English voices, especially ones designed for clarity
+                const englishVoice = voices.find(v =>
+                    v.lang.startsWith('en') && (v.name.includes('Samantha') || v.name.includes('Alex') || v.name.includes('Google'))
+                ) || voices.find(v => v.lang.startsWith('en-US'))
+                  || voices.find(v => v.lang.startsWith('en'))
+                  || voices[0];
+
+                if (englishVoice) {
+                    utterance.voice = englishVoice;
+                }
+            }
+
             // Visual feedback
             const button = document.getElementById('listenButton');
             button.classList.add('speaking');
@@ -700,7 +798,15 @@
                 button.classList.remove('speaking');
             };
 
-            synth.speak(utterance);
+            utterance.onerror = (event) => {
+                console.error('Speech synthesis error:', event.error);
+                button.classList.remove('speaking');
+            };
+
+            // Chrome has a bug where speech can get stuck - this helps
+            setTimeout(() => {
+                synth.speak(utterance);
+            }, 10);
         }
 
         // Update progress
