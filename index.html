@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spelling Quiz Adventure! ⭐</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Comic Sans MS', 'Trebuchet MS', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 30px;
+            padding: 40px;
+            max-width: 700px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            color: #667eea;
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.2em;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        /* Setup Screen */
+        .word-input-area {
+            margin-bottom: 20px;
+        }
+
+        .word-input-area label {
+            display: block;
+            margin-bottom: 10px;
+            color: #333;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+
+        .word-input-area textarea {
+            width: 100%;
+            padding: 15px;
+            border: 3px solid #667eea;
+            border-radius: 15px;
+            font-size: 1.1em;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 150px;
+        }
+
+        .word-input-area textarea:focus {
+            outline: none;
+            border-color: #764ba2;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+        }
+
+        .helper-text {
+            margin-top: 10px;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        /* Quiz Screen */
+        .progress-section {
+            margin-bottom: 30px;
+        }
+
+        .progress-text {
+            text-align: center;
+            font-size: 1.3em;
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .word-section {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 25px;
+        }
+
+        .listen-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.3em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(76, 175, 80, 0.3);
+        }
+
+        .listen-button:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(76, 175, 80, 0.4);
+        }
+
+        .listen-button:active {
+            transform: translateY(0);
+        }
+
+        .listen-button.speaking {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .context-sentence {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            border-left: 5px solid #667eea;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .context-sentence strong {
+            color: #667eea;
+        }
+
+        .input-section {
+            margin-bottom: 20px;
+        }
+
+        .spelling-input {
+            width: 100%;
+            padding: 20px;
+            border: 3px solid #667eea;
+            border-radius: 15px;
+            font-size: 1.5em;
+            text-align: center;
+            font-weight: bold;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .spelling-input:focus {
+            outline: none;
+            border-color: #764ba2;
+            box-shadow: 0 0 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .spelling-input.correct {
+            border-color: #4CAF50;
+            background: #e8f5e9;
+        }
+
+        .spelling-input.incorrect {
+            border-color: #ff6b6b;
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .feedback-message {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 1.2em;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .feedback-message.show {
+            opacity: 1;
+        }
+
+        .feedback-message.error {
+            background: #ffe0e0;
+            color: #d32f2f;
+        }
+
+        .feedback-message.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .btn {
+            padding: 18px 25px;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+            grid-column: 1 / -1;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .btn-secondary {
+            background: #ffd93d;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #fcc419;
+        }
+
+        .btn-reveal {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .btn-reveal:hover:not(:disabled) {
+            background: #ee5a52;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* Completion Screen */
+        .celebration {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .celebration-emoji {
+            font-size: 5em;
+            animation: bounce 1s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .celebration h2 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin: 20px 0;
+        }
+
+        .word-list {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .word-list h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .word-item {
+            padding: 12px;
+            background: white;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.2em;
+        }
+
+        .word-item .badge {
+            font-size: 1.5em;
+        }
+
+        .review-section {
+            background: #fff3e0;
+            padding: 25px;
+            border-radius: 15px;
+            border-left: 5px solid #ff9800;
+            margin-bottom: 20px;
+        }
+
+        .review-section h3 {
+            color: #f57c00;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .review-word {
+            padding: 10px;
+            background: white;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .empty-review {
+            text-align: center;
+            font-size: 1.3em;
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 600px) {
+            .container {
+                padding: 25px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .subtitle {
+                font-size: 1em;
+            }
+
+            .button-group {
+                grid-template-columns: 1fr;
+            }
+
+            .btn-primary {
+                grid-column: 1;
+            }
+
+            .spelling-input {
+                font-size: 1.2em;
+            }
+        }
+
+        /* Encouraging Messages */
+        .encouragement {
+            text-align: center;
+            font-size: 1.5em;
+            color: #667eea;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Setup Screen -->
+        <div id="setupScreen" class="screen active">
+            <h1>🎯 Spelling Quiz Adventure!</h1>
+            <p class="subtitle">Let's practice those spelling words!</p>
+
+            <div class="word-input-area">
+                <label for="wordListInput">📝 Enter your spelling words (one per line):</label>
+                <textarea
+                    id="wordListInput"
+                    placeholder="beautiful&#10;because&#10;believe&#10;through&#10;friend"
+                    autofocus
+                ></textarea>
+                <p class="helper-text">💡 Tip: Type or paste your words, with each word on a new line!</p>
+            </div>
+
+            <button class="btn btn-primary" onclick="startQuiz()">🚀 Start Quiz!</button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quizScreen" class="screen">
+            <div class="progress-section">
+                <div class="progress-text">
+                    <span id="progressText">0 of 0 words mastered</span> ⭐
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%">
+                        <span id="progressPercent">0%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="word-section">
+                <button class="listen-button" id="listenButton" onclick="speakWord()">
+                    🔊 Listen to the word
+                </button>
+
+                <div class="context-sentence" id="contextSentence">
+                    <strong>Use it in a sentence:</strong><br>
+                    The ________ sunset painted the sky with amazing colors.
+                </div>
+
+                <div class="input-section">
+                    <input
+                        type="text"
+                        id="spellingInput"
+                        class="spelling-input"
+                        placeholder="Type the spelling here..."
+                        autocomplete="off"
+                        spellcheck="false"
+                    >
+                    <div class="feedback-message" id="feedbackMessage"></div>
+                </div>
+
+                <div class="encouragement" id="encouragement"></div>
+            </div>
+
+            <div class="button-group">
+                <button class="btn btn-secondary" onclick="skipWord()">
+                    ⏭️ Skip for Now
+                </button>
+                <button class="btn btn-reveal" id="revealButton" onclick="revealWord()" disabled>
+                    👀 Reveal Word
+                </button>
+            </div>
+        </div>
+
+        <!-- Completion Screen -->
+        <div id="completionScreen" class="screen">
+            <div class="celebration">
+                <div class="celebration-emoji">🎉</div>
+                <h2>Amazing Job!</h2>
+                <p class="subtitle">You've mastered all your spelling words!</p>
+            </div>
+
+            <div class="word-list" id="completedWordsList">
+                <h3>📚 Your Spelling Words</h3>
+            </div>
+
+            <div class="review-section" id="reviewSection">
+                <h3>📖 Words to Practice More</h3>
+                <div id="reviewList"></div>
+            </div>
+
+            <button class="btn btn-primary" onclick="restartQuiz()">
+                🔄 Start a New Quiz
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Application State
+        let words = [];
+        let currentWordIndex = 0;
+        let wordStats = new Map();
+        let currentWord = null;
+        let synth = window.speechSynthesis;
+
+        // Encouraging messages
+        const encouragingMessages = [
+            "You're doing great! Keep going! 🌟",
+            "Fantastic effort! You've got this! 💪",
+            "You're a spelling superstar! ⭐",
+            "Way to go! Keep up the amazing work! 🎨",
+            "You're learning so much! Awesome! 🚀",
+            "Great job! You're getting better! 🎯",
+            "Keep it up! You're doing wonderful! 🌈",
+            "Excellent work! Stay focused! 🎪"
+        ];
+
+        const firstTryMessages = [
+            "Perfect on the first try! 🌟",
+            "Wow! You nailed it! ⭐",
+            "First try! You're amazing! 🎯",
+            "Incredible! First attempt! 💫",
+            "Outstanding! Got it right away! 🏆"
+        ];
+
+        // Context sentence templates
+        const sentenceTemplates = [
+            "The _____ was very interesting to learn about.",
+            "I saw a _____ at the park today.",
+            "My teacher explained what _____ means.",
+            "The story had a _____ in it.",
+            "We learned about _____ in class.",
+            "I found a _____ in my backyard.",
+            "The _____ made everyone smile.",
+            "My friend showed me a _____ yesterday.",
+            "The book described a _____ in detail.",
+            "I want to learn more about _____.",
+            "The _____ was beautiful to see.",
+            "We talked about _____ during lunch.",
+            "My family visited a place with _____.",
+            "The _____ helped solve the problem.",
+            "I read about _____ in my favorite book.",
+            "The _____ surprised everyone.",
+            "We saw _____ on our field trip.",
+            "The _____ was part of the science lesson.",
+            "I wrote a story about _____.",
+            "The _____ appeared in my dream last night."
+        ];
+
+        // Initialize word stats
+        function initializeWord(word) {
+            if (!wordStats.has(word)) {
+                wordStats.set(word, {
+                    attempts: 0,
+                    skipped: false,
+                    firstTry: true,
+                    completed: false,
+                    revealed: false
+                });
+            }
+        }
+
+        // Generate context sentence with underscores
+        function generateContextSentence(word) {
+            const underscores = '_'.repeat(word.length);
+            const template = sentenceTemplates[Math.floor(Math.random() * sentenceTemplates.length)];
+            return template.replace('_____', underscores);
+        }
+
+        // Start Quiz
+        function startQuiz() {
+            const input = document.getElementById('wordListInput').value.trim();
+
+            if (!input) {
+                alert('Please enter at least one spelling word! 📝');
+                return;
+            }
+
+            // Parse words
+            words = input.split('\n')
+                .map(word => word.trim())
+                .filter(word => word.length > 0);
+
+            if (words.length === 0) {
+                alert('Please enter valid spelling words! 📝');
+                return;
+            }
+
+            // Initialize word stats
+            words.forEach(word => initializeWord(word));
+
+            // Switch to quiz screen
+            document.getElementById('setupScreen').classList.remove('active');
+            document.getElementById('quizScreen').classList.add('active');
+
+            // Start first word
+            loadWord();
+        }
+
+        // Load current word
+        function loadWord() {
+            if (currentWordIndex >= words.length) {
+                // Check if all words are completed
+                if (allWordsCompleted()) {
+                    showCompletionScreen();
+                    return;
+                } else {
+                    // Loop back to incomplete words
+                    currentWordIndex = 0;
+                    // Find first incomplete word
+                    while (currentWordIndex < words.length &&
+                           wordStats.get(words[currentWordIndex]).completed) {
+                        currentWordIndex++;
+                    }
+                }
+            }
+
+            currentWord = words[currentWordIndex];
+            const stats = wordStats.get(currentWord);
+
+            // Update UI
+            updateProgress();
+            document.getElementById('contextSentence').innerHTML =
+                `<strong>Use it in a sentence:</strong><br>${generateContextSentence(currentWord)}`;
+
+            // Clear input
+            const input = document.getElementById('spellingInput');
+            input.value = '';
+            input.className = 'spelling-input';
+            input.focus();
+
+            // Clear feedback
+            const feedback = document.getElementById('feedbackMessage');
+            feedback.className = 'feedback-message';
+            feedback.textContent = '';
+
+            // Update reveal button
+            document.getElementById('revealButton').disabled = !stats.skipped;
+
+            // Clear encouragement
+            document.getElementById('encouragement').textContent = '';
+
+            // Auto-speak the word
+            setTimeout(() => speakWord(), 300);
+        }
+
+        // Text-to-speech
+        function speakWord() {
+            if (!currentWord) return;
+
+            // Cancel any ongoing speech
+            synth.cancel();
+
+            const utterance = new SpeechSynthesisUtterance(currentWord);
+            utterance.rate = 0.8; // Slightly slower for clarity
+            utterance.pitch = 1.1; // Slightly higher pitch for friendliness
+            utterance.volume = 1;
+
+            // Visual feedback
+            const button = document.getElementById('listenButton');
+            button.classList.add('speaking');
+
+            utterance.onend = () => {
+                button.classList.remove('speaking');
+            };
+
+            synth.speak(utterance);
+        }
+
+        // Update progress
+        function updateProgress() {
+            const completed = Array.from(wordStats.values())
+                .filter(stat => stat.completed).length;
+            const total = words.length;
+            const percentage = Math.round((completed / total) * 100);
+
+            document.getElementById('progressText').textContent =
+                `${completed} of ${total} words mastered`;
+            document.getElementById('progressFill').style.width = `${percentage}%`;
+            document.getElementById('progressPercent').textContent = `${percentage}%`;
+        }
+
+        // Check spelling
+        function checkSpelling() {
+            const input = document.getElementById('spellingInput');
+            const guess = input.value.trim();
+
+            if (!guess) return;
+
+            const stats = wordStats.get(currentWord);
+            stats.attempts++;
+
+            if (guess.toLowerCase() === currentWord.toLowerCase()) {
+                // Correct!
+                input.className = 'spelling-input correct';
+                const feedback = document.getElementById('feedbackMessage');
+
+                if (stats.firstTry && !stats.revealed) {
+                    feedback.textContent = firstTryMessages[
+                        Math.floor(Math.random() * firstTryMessages.length)
+                    ] + ' ⭐';
+                } else {
+                    feedback.textContent = 'That\'s right! Well done! 🎉';
+                }
+
+                feedback.className = 'feedback-message success show';
+
+                stats.completed = true;
+
+                // Move to next word after a short delay
+                setTimeout(() => {
+                    currentWordIndex++;
+                    loadWord();
+                }, 1500);
+
+            } else {
+                // Incorrect
+                input.className = 'spelling-input incorrect';
+                const feedback = document.getElementById('feedbackMessage');
+                const messages = [
+                    'Not quite! Try again 😊',
+                    'Almost there! Give it another go! 🌟',
+                    'Oops! Let\'s try once more! 💪',
+                    'So close! You can do it! 🎯'
+                ];
+                feedback.textContent = messages[Math.floor(Math.random() * messages.length)];
+                feedback.className = 'feedback-message error show';
+
+                stats.firstTry = false;
+            }
+        }
+
+        // Skip word
+        function skipWord() {
+            const stats = wordStats.get(currentWord);
+            stats.skipped = true;
+            stats.firstTry = false;
+
+            // Remove current word and add to end
+            words.push(words.splice(currentWordIndex, 1)[0]);
+
+            // Show encouraging message
+            const encouragement = document.getElementById('encouragement');
+            encouragement.textContent = "No problem! We'll come back to this one! 🔄";
+
+            setTimeout(() => {
+                loadWord();
+            }, 800);
+        }
+
+        // Reveal word
+        function revealWord() {
+            const stats = wordStats.get(currentWord);
+            stats.revealed = true;
+            stats.firstTry = false;
+
+            const input = document.getElementById('spellingInput');
+            input.value = currentWord;
+            input.className = 'spelling-input';
+
+            const feedback = document.getElementById('feedbackMessage');
+            feedback.textContent = 'Here it is! Practice writing it a few times! 📝';
+            feedback.className = 'feedback-message show';
+
+            // Enable input for them to type it themselves
+            setTimeout(() => {
+                input.value = '';
+                input.focus();
+                feedback.textContent = 'Now try typing it yourself! 💪';
+            }, 2000);
+        }
+
+        // Check if all words completed
+        function allWordsCompleted() {
+            return Array.from(wordStats.values()).every(stat => stat.completed);
+        }
+
+        // Show completion screen
+        function showCompletionScreen() {
+            document.getElementById('quizScreen').classList.remove('active');
+            document.getElementById('completionScreen').classList.add('active');
+
+            // Display all words with badges
+            const wordsList = document.getElementById('completedWordsList');
+            let wordsHTML = '<h3>📚 Your Spelling Words</h3>';
+
+            words.forEach(word => {
+                const stats = wordStats.get(word);
+                const badge = (stats.firstTry && !stats.revealed) ? '⭐' : '✅';
+                wordsHTML += `<div class="word-item"><span class="badge">${badge}</span> <strong>${word}</strong></div>`;
+            });
+
+            wordsList.innerHTML = wordsHTML;
+
+            // Show review section
+            const reviewWords = words.filter(word => {
+                const stats = wordStats.get(word);
+                return stats.skipped || stats.revealed || !stats.firstTry;
+            });
+
+            const reviewList = document.getElementById('reviewList');
+
+            if (reviewWords.length === 0) {
+                reviewList.innerHTML = '<div class="empty-review">Perfect! You got every word right on the first try! 🏆</div>';
+            } else {
+                let reviewHTML = '';
+                reviewWords.forEach(word => {
+                    reviewHTML += `<div class="review-word">📖 ${word}</div>`;
+                });
+                reviewList.innerHTML = reviewHTML;
+            }
+        }
+
+        // Restart quiz
+        function restartQuiz() {
+            // Reset state
+            words = [];
+            currentWordIndex = 0;
+            wordStats.clear();
+            currentWord = null;
+
+            // Reset UI
+            document.getElementById('wordListInput').value = '';
+            document.getElementById('completionScreen').classList.remove('active');
+            document.getElementById('setupScreen').classList.add('active');
+        }
+
+        // Input event listener
+        document.getElementById('spellingInput').addEventListener('input', (e) => {
+            const input = e.target;
+            const feedback = document.getElementById('feedbackMessage');
+
+            // Clear error styling and feedback when user types
+            if (input.classList.contains('incorrect')) {
+                input.classList.remove('incorrect');
+                feedback.className = 'feedback-message';
+                feedback.textContent = '';
+            }
+        });
+
+        // Enter key to check spelling
+        document.getElementById('spellingInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                checkSpelling();
+            }
+        });
+
+        // Show random encouraging message periodically
+        setInterval(() => {
+            const quizScreen = document.getElementById('quizScreen');
+            if (quizScreen.classList.contains('active')) {
+                const encouragement = document.getElementById('encouragement');
+                if (!encouragement.textContent) {
+                    encouragement.textContent = encouragingMessages[
+                        Math.floor(Math.random() * encouragingMessages.length)
+                    ];
+
+                    setTimeout(() => {
+                        encouragement.textContent = '';
+                    }, 3000);
+                }
+            }
+        }, 15000); // Every 15 seconds
+    </script>
+</body>
+</html>
