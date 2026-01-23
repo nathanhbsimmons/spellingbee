@@ -2,60 +2,72 @@
 
 **Last Updated:** 2026-01-23
 **Repository:** nathanhbsimmons/spellingbee
-**Status:** Initial setup phase
+**Status:** Active - Spelling Quiz Application Implemented
 
 ## Project Overview
 
-This repository contains a Spelling Bee application. The Spelling Bee is a word puzzle game where players create words using a set of letters, with one required letter that must be included in every word.
+This repository contains an interactive **Spelling Quiz** application designed for children (age 9) to practice weekly spelling words. Unlike the traditional NYT Spelling Bee word puzzle, this is an educational tool focused on helping students learn and master their spelling word lists.
 
 ### Project Purpose
-- Build a Spelling Bee word puzzle game
-- Provide an engaging word-finding experience
-- Track player progress and scoring
+- Provide an interactive way for children to practice spelling words
+- Use text-to-speech to help with pronunciation
+- Offer encouraging, gamified feedback to build confidence
+- Track progress and identify words that need more practice
+- Work seamlessly across desktop, tablet, and mobile devices
 
 ## Repository Status
 
-**CURRENT STATE:** This is a new repository with no code yet. This document will be updated as the project develops.
+**CURRENT STATE:** Initial version complete with all core features implemented as a standalone HTML application.
 
 ## Codebase Structure
 
 ```
 spellingbee/
-├── .git/                 # Git version control
-└── CLAUDE.md            # This file - AI assistant guide
+├── .git/                  # Git version control
+├── spelling-quiz.html     # Main application (standalone HTML/CSS/JS)
+├── README.md             # User-facing documentation and usage guide
+└── CLAUDE.md             # This file - AI assistant guide
 ```
 
-### Expected Structure (To Be Implemented)
+### Architecture Notes
 
-The following structure is recommended as the project develops:
+The application is intentionally designed as a **single, self-contained HTML file** for maximum portability and ease of use:
 
-```
-spellingbee/
-├── src/                 # Source code
-│   ├── components/      # UI components
-│   ├── utils/          # Utility functions
-│   ├── services/       # Business logic and services
-│   └── types/          # TypeScript type definitions
-├── public/             # Static assets
-├── tests/              # Test files
-├── docs/               # Documentation
-├── package.json        # Project dependencies
-├── tsconfig.json       # TypeScript configuration
-├── README.md           # User-facing documentation
-└── CLAUDE.md          # This file
-```
+- **No build process required**: Opens directly in any modern browser
+- **No dependencies**: All code is vanilla HTML/CSS/JavaScript
+- **Offline capable**: Works without internet connection
+- **Cross-platform**: Runs on any device with a web browser
+- **Privacy-focused**: No external requests, no data collection
+
+This architecture was chosen because:
+1. Parents/teachers can easily download and use without technical setup
+2. Works on school computers with restricted internet access
+3. No installation or npm packages required
+4. Easy to share via email or USB drive
+5. Perfect for a child's educational tool
 
 ## Technology Stack
 
-**To Be Determined** - Update this section when technologies are chosen.
+**Current Implementation:**
+- **HTML5**: Semantic markup for structure
+- **CSS3**: Modern styling with flexbox, grid, gradients, and animations
+- **Vanilla JavaScript (ES6+)**: No frameworks or libraries
+- **Web Speech API**: Browser-native text-to-speech functionality
+- **LocalStorage**: Could be added for persistence (not currently used)
 
-Common options for this type of project:
-- Frontend: React, Vue, or Svelte
-- Language: TypeScript or JavaScript
-- Styling: CSS, Tailwind, or styled-components
-- Build Tool: Vite, Webpack, or Next.js
-- Testing: Jest, Vitest, or Playwright
-- State Management: Context API, Redux, or Zustand
+**Browser APIs Used:**
+- `window.speechSynthesis`: Text-to-speech for word pronunciation
+- `Map`: Efficient state management for word statistics
+- DOM APIs: Event listeners, dynamic content updates
+- CSS Animations: Smooth transitions and visual feedback
+
+**Design Choices:**
+- **No Framework**: Keeps file size small and eliminates dependencies
+- **Embedded Styles**: All CSS in `<style>` tags for portability
+- **Embedded Scripts**: All JavaScript in `<script>` tags
+- **Comic Sans MS Font**: Child-friendly, playful typography
+- **Gradient Backgrounds**: Engaging purple color scheme
+- **Large Touch Targets**: Optimized for tablet/mobile use
 
 ## Development Workflow
 
@@ -159,26 +171,78 @@ function _internalHelper() { }
 - Group related utilities together
 - Keep file sizes reasonable (<300 lines as a guideline)
 
-## Game-Specific Conventions
+### JavaScript Patterns in This Application
 
-### Spelling Bee Rules (Standard)
-- 7 letters arranged in a honeycomb pattern
-- One center letter (required in all words)
-- 6 outer letters (optional)
-- Words must be 4+ letters long
-- Words can reuse letters
-- Pangrams (using all 7 letters) score bonus points
+The spelling-quiz.html file follows these patterns:
 
-### Scoring System (Standard)
-- 4-letter words: 1 point
-- Longer words: 1 point per letter
-- Pangrams: +7 bonus points
+```javascript
+// State management using Map for word tracking
+let wordStats = new Map();
 
-### Data Requirements
-- Dictionary/word list for validation
-- Letter set generation algorithm
-- Score tracking and persistence
-- Progress levels (e.g., Beginner → Genius)
+// Initialize state for each word
+function initializeWord(word) {
+    wordStats.set(word, {
+        attempts: 0,
+        skipped: false,
+        firstTry: true,
+        completed: false,
+        revealed: false
+    });
+}
+
+// Event listeners on DOM elements
+document.getElementById('input').addEventListener('input', handleInput);
+
+// DOM manipulation for screen transitions
+function showScreen(screenId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(screenId).classList.add('active');
+}
+
+// Template strings for dynamic content
+element.innerHTML = `<strong>Word:</strong> ${word}`;
+```
+
+**Key Patterns:**
+1. **Map for efficient lookups**: `wordStats` uses Map instead of objects
+2. **Event delegation**: Event listeners attached to specific elements
+3. **Class toggling**: `.active` class controls screen visibility
+4. **Template literals**: Dynamic HTML generation with template strings
+5. **Array methods**: `.forEach()`, `.filter()`, `.map()` for data processing
+6. **Async speech**: Text-to-speech using browser API callbacks
+7. **Timeout delays**: `setTimeout()` for UX timing (delays between actions)
+
+## Application-Specific Conventions
+
+### Spelling Quiz Rules
+- User provides custom word list at session start
+- Each word is presented with audio pronunciation
+- Context sentences generated automatically with underscores
+- Unlimited attempts allowed per word
+- Words can be skipped and revisited
+- Reveal option available after skipping once
+- Quiz completes when all words are spelled correctly
+
+### Achievement System
+- **⭐ Gold Star**: Word spelled correctly on first try (without revealing)
+- **✅ Checkmark**: Word mastered (needed multiple tries or help)
+- Progress tracked with visual progress bar
+- Encouraging messages throughout the session
+
+### Word State Tracking
+Each word maintains:
+- `attempts`: Number of spelling attempts
+- `skipped`: Whether word was skipped at least once
+- `firstTry`: Whether it was correct on first attempt
+- `completed`: Whether word is mastered
+- `revealed`: Whether the answer was shown
+
+### UI/UX Patterns
+- **Auto-focus**: Input field automatically focused for immediate typing
+- **Auto-play**: Word audio plays automatically when loaded
+- **Real-time validation**: Feedback given as user types
+- **Clear on error**: Error message clears when user starts typing
+- **Skip queue**: Skipped words move to end of queue
 
 ## Common Tasks
 
@@ -249,60 +313,107 @@ function _internalHelper() { }
 ## Debugging Tips
 
 ### Common Issues
-- **Word not accepted:** Check dictionary source and validation logic
-- **Score incorrect:** Verify scoring algorithm matches rules
-- **State not updating:** Check state management implementation
-- **Performance slow:** Profile rendering and optimize hot paths
+- **Text-to-speech not working:**
+  - Check browser compatibility (Chrome/Safari recommended)
+  - Verify user has interacted with page (auto-play restrictions)
+  - Check device volume and browser audio permissions
+  - Some browsers require HTTPS for speech synthesis
+
+- **Word validation issues:**
+  - Validation is case-insensitive (`toLowerCase()` used)
+  - Check for extra whitespace in word list input
+  - Verify `trim()` is working on user input
+
+- **State not updating:**
+  - Check Map operations (`wordStats.get()`, `wordStats.set()`)
+  - Verify DOM updates are triggered after state changes
+  - Ensure correct word index management
+
+- **Responsive design issues:**
+  - Test media queries at different breakpoints
+  - Check flexbox/grid layouts on various devices
+  - Verify touch targets are at least 44px for mobile
 
 ### Debugging Tools
-- Browser DevTools
-- React DevTools (if using React)
+- Browser DevTools (Console, Elements, Network)
+- Speech Synthesis API console (`speechSynthesis.getVoices()`)
 - Console logging (remove before commit)
 - Debugger breakpoints
+- Mobile device simulators in DevTools
+- Accessibility inspector for WCAG compliance
+
+### Testing Checklist
+- [ ] Test on Chrome, Safari, Firefox, Edge
+- [ ] Test on mobile (iOS Safari, Android Chrome)
+- [ ] Test on tablet (landscape and portrait)
+- [ ] Test with different word list sizes (5, 10, 20+ words)
+- [ ] Test skip and reveal functionality
+- [ ] Test audio with muted/unmuted states
+- [ ] Test keyboard navigation
+- [ ] Verify progress bar accuracy
 
 ## Resources
 
 ### External References
-- [NYT Spelling Bee](https://www.nytimes.com/puzzles/spelling-bee) - Original game for reference
-- Word lists: SCOWL, Enable, or other open-source dictionaries
-- Design inspiration: Honeycomb patterns, color schemes
+- [Web Speech API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Speech_API) - Text-to-speech documentation
+- [CSS Animations](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Animations) - Animation reference
+- [Responsive Design](https://developer.mozilla.org/en-US/docs/Learn/CSS/CSS_layout/Responsive_Design) - Mobile-first design
+- [WCAG Guidelines](https://www.w3.org/WAI/WCAG21/quickref/) - Accessibility standards
+- [Child-Friendly UX](https://www.nngroup.com/articles/kids-web-usability/) - Design for children
 
-### Documentation to Update
-- README.md - User-facing project description
-- CONTRIBUTING.md - Contribution guidelines (if created)
-- API.md - API documentation (if backend exists)
+### Educational Resources
+- Grade-level spelling word lists
+- Common Core spelling standards
+- Age-appropriate vocabulary lists
+- Phonics and spelling patterns
+
+### Documentation Files
+- **README.md** - User-facing documentation, usage guide, troubleshooting
+- **CLAUDE.md** - This file - Technical documentation for AI assistants
+- **spelling-quiz.html** - Inline documentation in code comments (add if needed)
 
 ## Project Roadmap
 
-### Phase 1: Foundation (Current)
-- [ ] Choose technology stack
-- [ ] Set up project structure
-- [ ] Configure build tools
-- [ ] Set up testing framework
+### Phase 1: Foundation ✅ Complete
+- [x] Choose technology stack (Vanilla HTML/CSS/JS)
+- [x] Set up project structure (Single file architecture)
+- [x] Create documentation (README.md, CLAUDE.md)
 
-### Phase 2: Core Game
-- [ ] Implement letter selection
-- [ ] Create game board UI
-- [ ] Add word validation
-- [ ] Implement scoring system
+### Phase 2: Core Functionality ✅ Complete
+- [x] Word list input system
+- [x] Text-to-speech integration
+- [x] Spelling validation with real-time feedback
+- [x] Skip and reveal functionality
+- [x] Unlimited retry mechanism
 
-### Phase 3: Features
-- [ ] Add progress tracking
-- [ ] Implement hints system
-- [ ] Add shuffle/rearrange letters
-- [ ] Show word list/found words
+### Phase 3: Enhancements ✅ Complete
+- [x] Progress tracking with visual bar
+- [x] Context sentence generation
+- [x] Gamification (gold stars, encouraging messages)
+- [x] Completion summary screen
+- [x] Review mode for struggled words
 
-### Phase 4: Polish
-- [ ] Add animations
-- [ ] Improve mobile experience
-- [ ] Add sound effects
-- [ ] Implement dark mode
+### Phase 4: Polish ✅ Complete
+- [x] Responsive design (mobile, tablet, desktop)
+- [x] Smooth animations and transitions
+- [x] Child-friendly color scheme
+- [x] Large touch targets for young users
+- [x] Auto-focus and keyboard support
 
-### Phase 5: Advanced
-- [ ] Add daily puzzles
-- [ ] Implement leaderboards
-- [ ] Add social sharing
-- [ ] Create puzzle editor
+### Phase 5: Potential Future Enhancements
+- [ ] Save/load word lists to localStorage
+- [ ] Multiple quiz sessions tracking
+- [ ] Print certificates of completion
+- [ ] Adjustable difficulty levels
+- [ ] Custom encouragement messages
+- [ ] Multiple voice options for text-to-speech
+- [ ] Timer mode (optional timed challenges)
+- [ ] Parent/teacher dashboard
+- [ ] Export progress reports
+- [ ] Dark mode toggle
+- [ ] Multi-language support
+- [ ] Word categories/themes
+- [ ] Achievement badges collection
 
 ## Notes for AI Assistants
 
@@ -350,7 +461,12 @@ This file should be updated when:
 
 ### Version History
 
-- **2026-01-23:** Initial creation - empty repository baseline
+- **2026-01-23 (Initial):** Created CLAUDE.md for empty repository baseline
+- **2026-01-23 (v1.0):** Updated with complete Spelling Quiz application details
+  - Added spelling-quiz.html (standalone application)
+  - Added README.md (user documentation)
+  - Documented architecture, tech stack, and conventions
+  - Updated roadmap to reflect completed features
 
 ---
 
