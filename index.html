@@ -748,28 +748,31 @@
         function speakWord() {
             if (!currentWord) return;
 
-            // Cancel any ongoing speech
-            synth.cancel();
-
-            const utterance = new SpeechSynthesisUtterance(currentWord);
-            utterance.rate = 0.8; // Slightly slower for clarity
-            utterance.volume = 1;
-            // Don't set voice - uses device's default native voice
-
             // Visual feedback
             const button = document.getElementById('listenButton');
             button.classList.add('speaking');
 
-            utterance.onend = () => {
-                button.classList.remove('speaking');
-            };
+            // Chrome bug workaround: cancel, resume, then speak after a brief delay
+            synth.cancel();
+            synth.resume();
 
-            utterance.onerror = (event) => {
-                console.error('Speech synthesis error:', event.error);
-                button.classList.remove('speaking');
-            };
+            setTimeout(() => {
+                const utterance = new SpeechSynthesisUtterance(currentWord);
+                utterance.rate = 0.8; // Slightly slower for clarity
+                utterance.volume = 1;
+                // Don't set voice - uses device's default native voice
 
-            synth.speak(utterance);
+                utterance.onend = () => {
+                    button.classList.remove('speaking');
+                };
+
+                utterance.onerror = (event) => {
+                    console.error('Speech synthesis error:', event.error);
+                    button.classList.remove('speaking');
+                };
+
+                synth.speak(utterance);
+            }, 50);
         }
 
         // Update progress
