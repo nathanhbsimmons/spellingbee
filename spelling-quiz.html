@@ -230,6 +230,11 @@
             animation: shake 0.5s ease;
         }
 
+        .spelling-input:disabled {
+            background: #e8f5e9;
+            cursor: not-allowed;
+        }
+
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             25% { transform: translateX(-10px); }
@@ -540,6 +545,15 @@
         let synth = window.speechSynthesis;
         let voices = [];
         let speechReady = false;
+        let isTransitioning = false; // Prevents input during word transitions
+        let revealTimeout = null; // Track reveal timeout for cancellation
+
+        // Escape HTML to prevent XSS attacks
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
 
         // Initialize speech synthesis voices
         function initVoices() {
@@ -644,7 +658,7 @@
         function generateFallbackSentence(word) {
             // Try to create a somewhat helpful sentence based on word characteristics
             const length = word.length;
-            const firstLetter = word[0].toUpperCase();
+            const firstLetter = escapeHtml(word[0].toUpperCase());
             const underscores = '_'.repeat(length);
 
             const fallbacks = [
@@ -693,10 +707,21 @@
                 return;
             }
 
-            // Parse words
-            words = input.split('\n')
+            // Parse words - remove duplicates and empty entries
+            const parsedWords = input.split('\n')
                 .map(word => word.trim())
                 .filter(word => word.length > 0);
+
+            // Remove duplicates (case-insensitive) while preserving original case
+            const seen = new Set();
+            words = parsedWords.filter(word => {
+                const lower = word.toLowerCase();
+                if (seen.has(lower)) {
+                    return false;
+                }
+                seen.add(lower);
+                return true;
+            });
 
             if (words.length === 0) {
                 alert('Please enter valid spelling words! 📝');
@@ -740,11 +765,18 @@
             document.getElementById('contextSentence').innerHTML =
                 `<strong>Use it in a sentence:</strong><br>${generateContextSentence(currentWord)}`;
 
-            // Clear input
+            // Clear and re-enable input
             const input = document.getElementById('spellingInput');
             input.value = '';
             input.className = 'spelling-input';
+            input.disabled = false;
             input.focus();
+
+            // Cancel any pending reveal timeout
+            if (revealTimeout) {
+                clearTimeout(revealTimeout);
+                revealTimeout = null;
+            }
 
             // Clear feedback
             const feedback = document.getElementById('feedbackMessage');
@@ -824,6 +856,9 @@
 
         // Check spelling
         function checkSpelling() {
+            // Prevent checking during transitions
+            if (isTransitioning) return;
+
             const input = document.getElementById('spellingInput');
             const guess = input.value.trim();
 
@@ -834,7 +869,9 @@
 
             if (guess.toLowerCase() === currentWord.toLowerCase()) {
                 // Correct!
+                isTransitioning = true; // Prevent further input
                 input.className = 'spelling-input correct';
+                input.disabled = true; // Visually indicate input is locked
                 const feedback = document.getElementById('feedbackMessage');
 
                 if (stats.firstTry && !stats.revealed) {
@@ -851,6 +888,7 @@
 
                 // Move to next word after a short delay
                 setTimeout(() => {
+                    isTransitioning = false;
                     currentWordIndex++;
                     loadWord();
                 }, 1500);
@@ -874,6 +912,10 @@
 
         // Skip word
         function skipWord() {
+            // Prevent skipping during transitions
+            if (isTransitioning) return;
+
+            isTransitioning = true;
             const stats = wordStats.get(currentWord);
             stats.skipped = true;
             stats.firstTry = false;
@@ -886,12 +928,16 @@
             encouragement.textContent = "No problem! We'll come back to this one! 🔄";
 
             setTimeout(() => {
+                isTransitioning = false;
                 loadWord();
             }, 800);
         }
 
         // Reveal word
         function revealWord() {
+            // Prevent revealing during transitions
+            if (isTransitioning) return;
+
             const stats = wordStats.get(currentWord);
             stats.revealed = true;
             stats.firstTry = false;
@@ -904,11 +950,20 @@
             feedback.textContent = 'Here it is! Practice writing it a few times! 📝';
             feedback.className = 'feedback-message show';
 
+            // Cancel any existing reveal timeout
+            if (revealTimeout) {
+                clearTimeout(revealTimeout);
+            }
+
             // Enable input for them to type it themselves
-            setTimeout(() => {
-                input.value = '';
-                input.focus();
-                feedback.textContent = 'Now try typing it yourself! 💪';
+            revealTimeout = setTimeout(() => {
+                // Only clear if the input still contains the revealed word
+                if (input.value === currentWord) {
+                    input.value = '';
+                    input.focus();
+                    feedback.textContent = 'Now try typing it yourself! 💪';
+                }
+                revealTimeout = null;
             }, 2000);
         }
 
@@ -929,7 +984,7 @@
             words.forEach(word => {
                 const stats = wordStats.get(word);
                 const badge = (stats.firstTry && !stats.revealed) ? '⭐' : '✅';
-                wordsHTML += `<div class="word-item"><span class="badge">${badge}</span> <strong>${word}</strong></div>`;
+                wordsHTML += `<div class="word-item"><span class="badge">${badge}</span> <strong>${escapeHtml(word)}</strong></div>`;
             });
 
             wordsList.innerHTML = wordsHTML;
@@ -947,7 +1002,7 @@
             } else {
                 let reviewHTML = '';
                 reviewWords.forEach(word => {
-                    reviewHTML += `<div class="review-word">📖 ${word}</div>`;
+                    reviewHTML += `<div class="review-word">📖 ${escapeHtml(word)}</div>`;
                 });
                 reviewList.innerHTML = reviewHTML;
             }
@@ -960,11 +1015,22 @@
             currentWordIndex = 0;
             wordStats.clear();
             currentWord = null;
+            isTransitioning = false;
+
+            // Cancel any pending timeouts
+            if (revealTimeout) {
+                clearTimeout(revealTimeout);
+                revealTimeout = null;
+            }
 
             // Reset UI
-            document.getElementById('wordListInput').value = '';
+            const wordListInput = document.getElementById('wordListInput');
+            wordListInput.value = '';
             document.getElementById('completionScreen').classList.remove('active');
             document.getElementById('setupScreen').classList.add('active');
+
+            // Focus the input for immediate typing
+            wordListInput.focus();
         }
 
         // Input event listener
@@ -1003,6 +1069,15 @@
                 }
             }
         }, 15000); // Every 15 seconds
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            // Focus the word list input for immediate typing
+            const wordListInput = document.getElementById('wordListInput');
+            if (wordListInput) {
+                wordListInput.focus();
+            }
+        });
     </script>
 </body>
 </html>
