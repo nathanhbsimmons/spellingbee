@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -36,6 +37,7 @@
                 opacity: 0;
                 transform: translateY(20px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -175,9 +177,12 @@
         }
 
         @keyframes pulse {
-            0%, 100% {
+
+            0%,
+            100% {
                 transform: scale(1);
             }
+
             50% {
                 transform: scale(1.05);
             }
@@ -231,9 +236,19 @@
         }
 
         @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            75% { transform: translateX(10px); }
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-10px);
+            }
+
+            75% {
+                transform: translateX(10px);
+            }
         }
 
         .feedback-message {
@@ -334,8 +349,15 @@
         }
 
         @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-20px); }
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-20px);
+            }
         }
 
         .celebration h2 {
@@ -440,6 +462,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <!-- Setup Screen -->
@@ -449,11 +472,8 @@
 
             <div class="word-input-area">
                 <label for="wordListInput">📝 Enter your spelling words (one per line):</label>
-                <textarea
-                    id="wordListInput"
-                    placeholder="beautiful&#10;because&#10;believe&#10;through&#10;friend"
-                    autofocus
-                ></textarea>
+                <textarea id="wordListInput" placeholder="beautiful&#10;because&#10;believe&#10;through&#10;friend"
+                    autofocus></textarea>
                 <p class="helper-text">💡 Tip: Type or paste your words, with each word on a new line!</p>
             </div>
 
@@ -484,14 +504,8 @@
                 </div>
 
                 <div class="input-section">
-                    <input
-                        type="text"
-                        id="spellingInput"
-                        class="spelling-input"
-                        placeholder="Type the spelling here..."
-                        autocomplete="off"
-                        spellcheck="false"
-                    >
+                    <input type="text" id="spellingInput" class="spelling-input" placeholder="Type the spelling here..."
+                        autocomplete="off" spellcheck="false">
                     <div class="feedback-message" id="feedbackMessage"></div>
                 </div>
 
@@ -559,86 +573,104 @@
             "Outstanding! Got it right away! 🏆"
         ];
 
-        // Word-specific context sentences - provides meaningful clues about the word
+        // Word-specific context sentences - shows the word in a meaningful sentence
         const wordContexts = {
             // Common spelling words with descriptive sentences
-            "beautiful": "The sunset was absolutely _____, with orange and pink colors painting the sky.",
-            "because": "I brought my umbrella _____ the weather forecast said it would rain.",
-            "believe": "Do you _____ in magic and fairy tales?",
-            "friend": "My best _____ and I play together at recess every day.",
-            "through": "The rabbit ran _____ the hole in the fence to escape.",
-            "their": "The students put _____ backpacks in the cubbies.",
-            "there": "Look over _____! I can see the rainbow!",
-            "they're": "_____ going to the movies after school today.",
-            "would": "I _____ like some ice cream, please.",
-            "could": "She _____ run faster than anyone else in her class.",
-            "should": "You _____ always brush your teeth before bed.",
-            "again": "Can we play that fun game _____?",
-            "against": "Our team played _____ the champions and won!",
-            "different": "Each snowflake is _____ from all the others.",
-            "thought": "I _____ about what to write in my story.",
-            "brought": "She _____ cupcakes to share with the whole class.",
-            "bought": "Mom _____ new shoes at the store yesterday.",
-            "caught": "The baseball player _____ the ball and made an amazing out!",
-            "taught": "My grandmother _____ me how to bake cookies.",
-            "enough": "Do we have _____ pizza for everyone at the party?",
-            "although": "_____ it was raining, we still had fun playing inside.",
-            "together": "Let's work _____ to solve this puzzle.",
-            "favorite": "Pizza is my _____ food to eat for dinner.",
-            "special": "Today is a _____ day because it's my birthday!",
-            "finally": "After waiting all week, the package _____ arrived!",
-            "usually": "I _____ wake up at seven o'clock on school days.",
-            "probably": "It will _____ snow tomorrow based on the cold weather.",
-            "especially": "I love all fruits, _____ strawberries and watermelon.",
-            "important": "It's _____ to listen carefully to the teacher.",
-            "interesting": "The book about dinosaurs was very _____.",
-            "remember": "Do you _____ what happened in the story?",
-            "surprise": "We planned a birthday _____ party for Dad!",
-            "Wednesday": "We have art class every _____.",
-            "February": "Valentine's Day is in the month of _____.",
-            "beginning": "At the _____ of the movie, the hero was just a kid.",
-            "receive": "Did you _____ my letter in the mail?",
-            "separate": "Please _____ the colored blocks from the white ones.",
-            "necessary": "Water is _____ for all living things to survive.",
-            "immediately": "When the fire alarm rang, we left the building _____.",
-            "occasionally": "We _____ go out for ice cream as a treat.",
-            "environment": "We should protect the _____ by recycling.",
-            "temperature": "The _____ outside is very cold today, so wear a coat.",
-            "government": "The _____ makes laws to keep people safe.",
-            "knowledge": "Reading books helps you gain _____.",
-            "experience": "Going to camp was an amazing _____.",
-            "calendar": "I marked the party date on my _____.",
-            "library": "We borrowed books from the _____ yesterday.",
-            "restaurant": "Our family ate dinner at a nice _____ last night.",
-            "accident": "The car _____ blocked traffic on the highway.",
-            "disappear": "The magician made the rabbit _____ into thin air!",
-            "embarrass": "Please don't _____ me in front of my friends.",
-            "exaggerate": "Don't _____ — tell me exactly what happened.",
-            "guarantee": "I _____ this will be the best party ever!",
-            "occurred": "The thunderstorm _____ late in the afternoon.",
-            "recommend": "I _____ this book — it's really exciting!",
-            "rhythm": "The drummer kept a steady _____ throughout the song.",
-            "schedule": "Check the _____ to see when the bus arrives.",
-            "vacuum": "Mom asked me to _____ the living room carpet.",
-            "weird": "That was a _____ noise — what could it be?"
+            "beautiful": "It is a beautiful day today with blue skies and sunshine.",
+            "because": "I put my homework in my backpack because I did not want to forget it.",
+            "believe": "I believe you can do anything if you try your best.",
+            "friend": "My best friend and I like to play soccer together at recess.",
+            "through": "The dog ran through the tunnel and came out the other side.",
+            "their": "The kids put their coats in their cubbies when they got to school.",
+            "there": "Look over there by the big tree - I see a squirrel!",
+            "they're": "They're coming to my birthday party this Saturday.",
+            "would": "I would like some more juice, please.",
+            "could": "She could run faster than anyone else in her class.",
+            "should": "You should always brush your teeth before bed.",
+            "again": "That game was so fun! Can we play it again?",
+            "against": "Our soccer team played against the tigers and we won!",
+            "different": "My sister and I like different flavors of ice cream.",
+            "thought": "I thought about what I wanted to be for Halloween.",
+            "brought": "She brought cupcakes to share with the whole class.",
+            "bought": "Mom bought new shoes at the store yesterday.",
+            "caught": "The baseball player caught the ball and made an amazing out!",
+            "taught": "My grandmother taught me how to bake chocolate chip cookies.",
+            "enough": "Do we have enough pizza for everyone at the party?",
+            "although": "Although it was raining, we still had fun playing inside.",
+            "together": "Let's work together to finish this puzzle.",
+            "favorite": "Pizza is my favorite food to eat for dinner.",
+            "special": "Today is a special day because it's my birthday!",
+            "finally": "After waiting all week, the package finally arrived!",
+            "usually": "I usually wake up at seven o'clock on school days.",
+            "probably": "It will probably snow tomorrow because it's so cold outside.",
+            "especially": "I love all fruits, especially strawberries and watermelon.",
+            "important": "It's important to listen carefully when the teacher is talking.",
+            "interesting": "The book about dinosaurs was very interesting.",
+            "remember": "Do you remember what happened at the end of the story?",
+            "surprise": "We planned a surprise birthday party for Dad!",
+            "wednesday": "We have art class every Wednesday afternoon.",
+            "february": "Valentine's Day is in the month of February.",
+            "beginning": "At the beginning of the movie, the hero was just a regular kid.",
+            "receive": "I was so happy to receive your letter in the mail!",
+            "separate": "Please separate the red blocks from the blue ones.",
+            "necessary": "Water is necessary for all living things to survive.",
+            "immediately": "When the fire alarm rang, we left the building immediately.",
+            "occasionally": "We occasionally go out for ice cream as a special treat.",
+            "environment": "We should protect the environment by recycling and not littering.",
+            "temperature": "The temperature outside is very cold today, so wear a warm coat.",
+            "government": "The government makes laws to help keep people safe.",
+            "knowledge": "Reading books helps you gain knowledge about the world.",
+            "experience": "Going to summer camp was an amazing experience.",
+            "calendar": "I marked the party date on my calendar so I wouldn't forget.",
+            "library": "We borrowed three books from the library yesterday.",
+            "restaurant": "Our family ate dinner at a nice restaurant last night.",
+            "accident": "There was a car accident that blocked traffic on the highway.",
+            "disappear": "The magician made the rabbit disappear into thin air!",
+            "embarrass": "Please don't embarrass me in front of my friends.",
+            "exaggerate": "Don't exaggerate - tell me exactly what happened.",
+            "guarantee": "I guarantee this will be the best party ever!",
+            "occurred": "The thunderstorm occurred late in the afternoon.",
+            "recommend": "I recommend this book because it's really exciting!",
+            "rhythm": "The drummer kept a steady rhythm throughout the song.",
+            "schedule": "Check the schedule to see when the bus arrives.",
+            "vacuum": "Mom asked me to vacuum the living room carpet.",
+            "weird": "That was a weird noise - what could it be?",
+            "forget": "I put my homework in my backpack so I would not forget it.",
+            "always": "I always eat breakfast before I go to school.",
+            "never": "I have never seen snow before because I live where it's warm.",
+            "every": "I brush my teeth every morning and every night.",
+            "many": "There were many colorful butterflies in the garden.",
+            "some": "Can I have some more cookies, please?",
+            "come": "Please come to my house after school today.",
+            "people": "Many people came to watch the parade downtown.",
+            "water": "I drink a lot of water when I play sports.",
+            "other": "I finished my homework, but my other friend is still working.",
+            "about": "The movie was about a boy who found a magic lamp.",
+            "which": "Which color do you like better, blue or green?",
+            "first": "I was the first person to finish the math test.",
+            "write": "I like to write stories about adventures in space.",
+            "right": "Turn right at the corner to get to the park.",
+            "where": "Where did you put my favorite book?",
+            "after": "We went to get ice cream after the soccer game.",
+            "before": "Make sure to wash your hands before dinner.",
+            "little": "The little puppy was so cute and fluffy.",
+            "great": "We had a great time at the amusement park.",
+            "help": "Can you help me carry these heavy boxes?",
+            "talk": "I like to talk to my grandma on the phone.",
+            "walk": "I walk to school with my neighbor every day.",
+            "laugh": "The funny movie made everyone laugh out loud.",
+            "learn": "I want to learn how to play the guitar.",
+            "listen": "Please listen carefully to the instructions.",
+            "really": "I really want to go to the beach this summer.",
+            "pretty": "The flowers in the garden are really pretty.",
+            "happy": "I was so happy when I got an A on my test.",
+            "sorry": "I'm sorry I accidentally stepped on your foot.",
+            "ready": "Are you ready to go to the birthday party?",
+            "early": "We woke up early to watch the sunrise.",
+            "today": "Today is a perfect day to go to the park.",
+            "tomorrow": "Tomorrow we are going on a field trip to the zoo.",
+            "yesterday": "Yesterday I played soccer with my friends."
         };
-
-        // Fallback sentence generator for words not in our dictionary
-        function generateFallbackSentence(word) {
-            // Try to create a somewhat helpful sentence based on word characteristics
-            const length = word.length;
-            const firstLetter = word[0].toUpperCase();
-            const underscores = '_'.repeat(length);
-
-            const fallbacks = [
-                `This ${length}-letter word starts with the letter "${firstLetter}": ${underscores}`,
-                `Can you spell this word that begins with "${firstLetter}"? ${underscores}`,
-                `Listen carefully and spell this ${length}-letter word: ${underscores}`,
-                `This word has ${length} letters and starts with "${firstLetter}": ${underscores}`
-            ];
-
-            return fallbacks[Math.floor(Math.random() * fallbacks.length)];
-        }
 
         // Initialize word stats
         function initializeWord(word) {
@@ -709,7 +741,7 @@
                     currentWordIndex = 0;
                     // Find first incomplete word
                     while (currentWordIndex < words.length &&
-                           wordStats.get(words[currentWordIndex]).completed) {
+                        wordStats.get(words[currentWordIndex]).completed) {
                         currentWordIndex++;
                     }
                 }
@@ -971,4 +1003,5 @@
         }, 15000); // Every 15 seconds
     </script>
 </body>
+
 </html>
