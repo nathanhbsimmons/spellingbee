@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import Welcome from './components/Welcome'
 import WordListSetup from './components/WordListSetup'
 import ThemeSelector from './components/ThemeSelector'
 import Practice from './components/Practice'
@@ -7,9 +8,10 @@ import AdminPanel from './components/AdminPanel'
 import ProfileSelector from './components/ProfileSelector'
 import ModeSelector from './components/ModeSelector'
 import { THEMES, DEFAULT_THEME } from './components/themes'
-import { saveSession, getActiveProfile, getStreak } from './storage'
+import { saveSession, getActiveProfile, getStreak, hasSeenWelcome } from './storage'
 
 const SCREENS = {
+  WELCOME: 'welcome',
   PROFILE: 'profile',
   SETUP: 'setup',
   ADMIN: 'admin',
@@ -20,7 +22,7 @@ const SCREENS = {
 }
 
 export default function App() {
-  const [screen, setScreen] = useState(SCREENS.PROFILE)
+  const [screen, setScreen] = useState(hasSeenWelcome() ? SCREENS.PROFILE : SCREENS.WELCOME)
   const [words, setWords] = useState([])
   const [sentences, setSentences] = useState({})
   const [listName, setListName] = useState('')
@@ -28,6 +30,10 @@ export default function App() {
   const [theme, setTheme] = useState(DEFAULT_THEME)
   const [practiceMode, setPracticeMode] = useState('standard')
   const [streak, setStreak] = useState(0)
+
+  function handleWelcomeDone() {
+    setScreen(SCREENS.PROFILE)
+  }
 
   function handleProfileDone() {
     setScreen(SCREENS.SETUP)
@@ -87,6 +93,9 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center p-4">
       <div className="w-full max-w-lg">
+        {screen === SCREENS.WELCOME && (
+          <Welcome onDone={handleWelcomeDone} />
+        )}
         {screen === SCREENS.PROFILE && (
           <ProfileSelector onDone={handleProfileDone} />
         )}
@@ -94,6 +103,7 @@ export default function App() {
           <WordListSetup
             onStart={handleStartPractice}
             onManageLists={() => setScreen(SCREENS.ADMIN)}
+            onShowTutorial={() => setScreen(SCREENS.WELCOME)}
           />
         )}
         {screen === SCREENS.ADMIN && (

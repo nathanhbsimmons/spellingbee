@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-export default function WordListSetup({ onStart, onManageLists }) {
+export default function WordListSetup({ onStart, onManageLists, onShowTutorial }) {
   const [input, setInput] = useState('')
 
   function handleSubmit(e) {
@@ -60,6 +60,16 @@ export default function WordListSetup({ onStart, onManageLists }) {
           className="mt-3 w-full text-indigo-500 text-sm font-medium hover:text-indigo-700 transition-colors"
         >
           Manage Word Lists
+        </button>
+      )}
+
+      {onShowTutorial && (
+        <button
+          type="button"
+          onClick={onShowTutorial}
+          className="mt-1 w-full text-gray-400 text-sm hover:text-gray-600 transition-colors"
+        >
+          How It Works
         </button>
       )}
     </div>

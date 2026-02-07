@@ -48,4 +48,22 @@ describe('WordListSetup', () => {
     await user.click(screen.getByRole('button', { name: /start collecting/i }))
     expect(onStart).not.toHaveBeenCalled()
   })
+
+  it('shows How It Works button when onShowTutorial is provided', () => {
+    render(<WordListSetup onStart={() => {}} onShowTutorial={() => {}} />)
+    expect(screen.getByText('How It Works')).toBeInTheDocument()
+  })
+
+  it('calls onShowTutorial when How It Works is clicked', async () => {
+    const user = userEvent.setup()
+    const onShowTutorial = vi.fn()
+    render(<WordListSetup onStart={() => {}} onShowTutorial={onShowTutorial} />)
+    await user.click(screen.getByText('How It Works'))
+    expect(onShowTutorial).toHaveBeenCalled()
+  })
+
+  it('does not show How It Works when onShowTutorial is not provided', () => {
+    render(<WordListSetup onStart={() => {}} />)
+    expect(screen.queryByText('How It Works')).not.toBeInTheDocument()
+  })
 })

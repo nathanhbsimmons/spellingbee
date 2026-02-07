@@ -4,6 +4,7 @@ const PIN_KEY = 'spelling-collector-pin'
 const PROFILES_KEY = 'spelling-collector-profiles'
 const ACTIVE_PROFILE_KEY = 'spelling-collector-active-profile'
 const STREAK_KEY = 'spelling-collector-streak'
+const WELCOME_KEY = 'spelling-collector-welcome-seen'
 
 // --- Word Lists ---
 
@@ -209,4 +210,14 @@ export function getStreak(profileId) {
   }
 
   return 0
+}
+
+// --- Welcome ---
+
+export function hasSeenWelcome() {
+  return localStorage.getItem(WELCOME_KEY) === 'true'
+}
+
+export function dismissWelcome() {
+  localStorage.setItem(WELCOME_KEY, 'true')
 }

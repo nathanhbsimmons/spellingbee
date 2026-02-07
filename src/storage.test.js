@@ -4,6 +4,7 @@ import {
   loadSessions, saveSession, getPin, setPin, verifyPin,
   loadProfiles, createProfile, deleteProfile, getActiveProfile, setActiveProfile,
   updateStreak, getStreak,
+  hasSeenWelcome, dismissWelcome,
 } from './storage'
 
 beforeEach(() => {
@@ -168,5 +169,16 @@ describe('Streaks', () => {
     updateStreak('profile-b')
     expect(getStreak('profile-a')).toBe(1)
     expect(getStreak('profile-b')).toBe(1)
+  })
+})
+
+describe('Welcome', () => {
+  it('returns false when welcome has not been seen', () => {
+    expect(hasSeenWelcome()).toBe(false)
+  })
+
+  it('returns true after dismissWelcome is called', () => {
+    dismissWelcome()
+    expect(hasSeenWelcome()).toBe(true)
   })
 })
