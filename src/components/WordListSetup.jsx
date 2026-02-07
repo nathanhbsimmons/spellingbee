@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-export default function WordListSetup({ onStart }) {
+export default function WordListSetup({ onStart, onManageLists }) {
   const [input, setInput] = useState('')
 
   function handleSubmit(e) {
@@ -15,7 +15,7 @@ export default function WordListSetup({ onStart }) {
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-8">
+    <div className="bg-white rounded-2xl shadow-lg p-8 animate-[fade-in-up_0.3s_ease-out]">
       <h1 className="text-3xl font-bold text-center text-indigo-600 mb-2">
         Spelling Word Collector
       </h1>
@@ -52,6 +52,16 @@ export default function WordListSetup({ onStart }) {
           Start Collecting
         </button>
       </form>
+
+      {onManageLists && (
+        <button
+          type="button"
+          onClick={onManageLists}
+          className="mt-3 w-full text-indigo-500 text-sm font-medium hover:text-indigo-700 transition-colors"
+        >
+          Manage Word Lists
+        </button>
+      )}
     </div>
   )
 }
