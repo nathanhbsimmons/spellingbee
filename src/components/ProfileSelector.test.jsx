@@ -43,4 +43,10 @@ describe('ProfileSelector', () => {
     await user.click(screen.getByText(/continue without a profile/i))
     expect(onDone).toHaveBeenCalled()
   })
+
+  it('shows device-local storage notice', () => {
+    render(<ProfileSelector onDone={() => {}} />)
+    expect(screen.getByTestId('storage-notice')).toBeInTheDocument()
+    expect(screen.getByText(/data is saved on this device only/i)).toBeInTheDocument()
+  })
 })

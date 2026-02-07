@@ -1,4 +1,4 @@
-export default function ModeSelector({ onSelect }) {
+export default function ModeSelector({ onSelect, onBack }) {
   const modes = [
     {
       key: 'standard',
@@ -39,6 +39,15 @@ export default function ModeSelector({ onSelect }) {
           </button>
         ))}
       </div>
+
+      {onBack && (
+        <button
+          onClick={onBack}
+          className="mt-4 w-full text-gray-400 text-sm hover:text-gray-600 transition-colors"
+        >
+          Back
+        </button>
+      )}
     </div>
   )
 }

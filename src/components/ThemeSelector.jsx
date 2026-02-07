@@ -1,6 +1,6 @@
 import { THEMES } from './themes'
 
-export default function ThemeSelector({ selectedTheme, onSelect }) {
+export default function ThemeSelector({ selectedTheme, onSelect, onBack }) {
   return (
     <div className="bg-white rounded-2xl shadow-lg p-8 animate-[fade-in-up_0.3s_ease-out]">
       <h2 className="text-2xl font-bold text-center text-indigo-600 mb-2">
@@ -27,6 +27,15 @@ export default function ThemeSelector({ selectedTheme, onSelect }) {
           </button>
         ))}
       </div>
+
+      {onBack && (
+        <button
+          onClick={onBack}
+          className="mt-4 w-full text-gray-400 text-sm hover:text-gray-600 transition-colors"
+        >
+          Back
+        </button>
+      )}
     </div>
   )
 }

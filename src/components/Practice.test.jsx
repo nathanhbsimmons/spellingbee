@@ -143,15 +143,17 @@ describe('Practice', () => {
     expect(screen.getByText(/unscramble the letters/i)).toBeInTheDocument()
   })
 
-  it('does not show Play Word button in scramble mode', () => {
+  it('shows Play Word button in scramble mode', () => {
     render(<Practice {...defaultProps} mode="scramble" />)
-    expect(screen.queryByRole('button', { name: /play word/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /play word/i })).toBeInTheDocument()
   })
 
-  it('does not auto-play audio in scramble mode', () => {
+  it('auto-plays audio in scramble mode', () => {
     mockSpeak.mockClear()
     render(<Practice {...defaultProps} mode="scramble" />)
-    expect(mockSpeak).not.toHaveBeenCalled()
+    expect(mockSpeak).toHaveBeenCalled()
+    const utterance = mockSpeak.mock.calls[0][0]
+    expect(utterance.text).toBe('apple')
   })
 
   it('still allows typing and collecting in scramble mode', async () => {
@@ -174,5 +176,19 @@ describe('Practice', () => {
   it('does not show context sentence when not provided', () => {
     render(<Practice {...defaultProps} />)
     expect(screen.queryByTestId('context-sentence')).not.toBeInTheDocument()
+  })
+
+  // Back/quit button tests
+  it('shows quit practice button when onBack is provided', () => {
+    render(<Practice {...defaultProps} onBack={() => {}} />)
+    expect(screen.getByText('Quit Practice')).toBeInTheDocument()
+  })
+
+  it('calls onBack when quit practice is clicked', async () => {
+    const user = userEvent.setup()
+    const onBack = vi.fn()
+    render(<Practice {...defaultProps} onBack={onBack} />)
+    await user.click(screen.getByText('Quit Practice'))
+    expect(onBack).toHaveBeenCalled()
   })
 })

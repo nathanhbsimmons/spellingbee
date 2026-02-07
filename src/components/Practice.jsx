@@ -16,7 +16,7 @@ function scrambleWord(word) {
   return result
 }
 
-export default function Practice({ words, sentences = {}, collectedWords, onCollect, onComplete, ThemeVisualization, mode = 'standard' }) {
+export default function Practice({ words, sentences = {}, collectedWords, onCollect, onComplete, onBack, ThemeVisualization, mode = 'standard' }) {
   const currentIndex = collectedWords.length
   const isLastWord = currentIndex === words.length - 1
   const [typed, setTyped] = useState('')
@@ -32,7 +32,7 @@ export default function Practice({ words, sentences = {}, collectedWords, onColl
 
   useEffect(() => {
     inputRef.current?.focus()
-    if (autoPlay && supported && mode === 'standard') {
+    if (autoPlay && supported) {
       speak(words[currentIndex])
     }
   }, [currentIndex]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -96,7 +96,7 @@ export default function Practice({ words, sentences = {}, collectedWords, onColl
         </p>
       )}
 
-      {mode === 'standard' && supported ? (
+      {supported ? (
         <div className="flex items-center gap-3 mb-6">
           <button
             type="button"
@@ -119,11 +119,11 @@ export default function Practice({ words, sentences = {}, collectedWords, onColl
             Auto-play
           </label>
         </div>
-      ) : mode === 'standard' && !supported ? (
+      ) : (
         <p className="text-center text-amber-600 text-sm mb-6">
           Audio playback is not supported in this browser.
         </p>
-      ) : null}
+      )}
 
       <input
         ref={inputRef}
@@ -156,6 +156,15 @@ export default function Practice({ words, sentences = {}, collectedWords, onColl
           collectedWords={collectedWords}
           latestIndex={collectedWords.length - 1}
         />
+      )}
+
+      {onBack && (
+        <button
+          onClick={onBack}
+          className="mt-4 w-full text-gray-400 text-sm hover:text-gray-600 transition-colors"
+        >
+          Quit Practice
+        </button>
       )}
     </div>
   )

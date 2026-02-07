@@ -14,25 +14,41 @@ describe('AdminPanel', () => {
     expect(screen.getByText('Word Lists')).toBeInTheDocument()
   })
 
-  it('shows PIN prompt when a PIN is set', () => {
+  it('shows word lists view even when a PIN is set (viewing is free)', () => {
     setPin('1234')
+    createWordList('Week 1', ['apple'])
     render(<AdminPanel onSelectList={() => {}} onClose={() => {}} />)
-    expect(screen.getByText('Parent Access')).toBeInTheDocument()
+    expect(screen.getByText('Word Lists')).toBeInTheDocument()
+    expect(screen.getByText('Week 1')).toBeInTheDocument()
   })
 
-  it('unlocks with correct PIN', async () => {
+  it('prompts for PIN when trying to edit with PIN set', async () => {
     const user = userEvent.setup()
     setPin('1234')
+    createWordList('Week 1', ['apple'])
     render(<AdminPanel onSelectList={() => {}} onClose={() => {}} />)
+    await user.click(screen.getByText('Edit'))
+    expect(screen.getByText('Parent Access')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText(/enter pin/i)).toBeInTheDocument()
+  })
+
+  it('unlocks edit with correct PIN', async () => {
+    const user = userEvent.setup()
+    setPin('1234')
+    createWordList('Week 1', ['apple'])
+    render(<AdminPanel onSelectList={() => {}} onClose={() => {}} />)
+    await user.click(screen.getByText('Edit'))
     await user.type(screen.getByPlaceholderText(/enter pin/i), '1234')
     await user.click(screen.getByRole('button', { name: /unlock/i }))
-    expect(screen.getByText('Word Lists')).toBeInTheDocument()
+    expect(screen.getByText('Edit Word List')).toBeInTheDocument()
   })
 
   it('shows error on wrong PIN', async () => {
     const user = userEvent.setup()
     setPin('1234')
+    createWordList('Week 1', ['apple'])
     render(<AdminPanel onSelectList={() => {}} onClose={() => {}} />)
+    await user.click(screen.getByText('Edit'))
     await user.type(screen.getByPlaceholderText(/enter pin/i), 'wrong')
     await user.click(screen.getByRole('button', { name: /unlock/i }))
     expect(screen.getByText('Incorrect PIN')).toBeInTheDocument()
@@ -87,7 +103,7 @@ describe('AdminPanel', () => {
     expect(onClose).toHaveBeenCalled()
   })
 
-  // Sprint 8: Profiles view
+  // Profiles view
   it('shows profiles view with existing profiles', async () => {
     const user = userEvent.setup()
     createProfile('Alice')
@@ -106,12 +122,33 @@ describe('AdminPanel', () => {
     expect(screen.getByText('Bob')).toBeInTheDocument()
   })
 
-  // Sprint 8: Context sentences in create form
+  // Context sentences in create form
   it('shows sentence fields when words are entered in create form', async () => {
     const user = userEvent.setup()
     render(<AdminPanel onSelectList={() => {}} onClose={() => {}} />)
     await user.click(screen.getByRole('button', { name: /create new list/i }))
     await user.type(screen.getByPlaceholderText(/beautiful/i), 'apple\nbanana')
     expect(screen.getByTestId('sentence-fields')).toBeInTheDocument()
+  })
+
+  // PIN prompt cancellation
+  it('cancels PIN prompt and returns to lists', async () => {
+    const user = userEvent.setup()
+    setPin('1234')
+    createWordList('Week 1', ['apple'])
+    render(<AdminPanel onSelectList={() => {}} onClose={() => {}} />)
+    await user.click(screen.getByText('Edit'))
+    expect(screen.getByText('Parent Access')).toBeInTheDocument()
+    await user.click(screen.getByText('Cancel'))
+    expect(screen.getByText('Word Lists')).toBeInTheDocument()
+  })
+
+  // History accessible without PIN
+  it('shows history without PIN', async () => {
+    const user = userEvent.setup()
+    setPin('1234')
+    render(<AdminPanel onSelectList={() => {}} onClose={() => {}} />)
+    await user.click(screen.getByRole('button', { name: /history/i }))
+    expect(screen.getByText('Practice History')).toBeInTheDocument()
   })
 })

@@ -43,12 +43,43 @@ function Flower({ index, word, isNew }) {
   )
 }
 
+function GardenBackground() {
+  return (
+    <svg className="absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="none" viewBox="0 0 400 200" aria-hidden="true">
+      {/* Sun */}
+      <circle cx="350" cy="25" r="20" fill="#fbbf24" opacity="0.7" />
+      <circle cx="350" cy="25" r="28" fill="#fbbf24" opacity="0.2" />
+      {/* Clouds */}
+      <ellipse cx="80" cy="20" rx="30" ry="12" fill="white" opacity="0.6" />
+      <ellipse cx="100" cy="18" rx="25" ry="10" fill="white" opacity="0.5" />
+      <ellipse cx="250" cy="30" rx="35" ry="13" fill="white" opacity="0.5" />
+      <ellipse cx="275" cy="28" rx="25" ry="10" fill="white" opacity="0.4" />
+      {/* Hills */}
+      <ellipse cx="100" cy="200" rx="180" ry="50" fill="#86efac" opacity="0.4" />
+      <ellipse cx="320" cy="200" rx="150" ry="40" fill="#4ade80" opacity="0.3" />
+      {/* Grass tufts */}
+      <path d="M20,185 Q22,175 24,185" stroke="#4ade80" strokeWidth="1.5" fill="none" />
+      <path d="M60,188 Q62,178 64,188" stroke="#4ade80" strokeWidth="1.5" fill="none" />
+      <path d="M340,182 Q342,172 344,182" stroke="#4ade80" strokeWidth="1.5" fill="none" />
+      <path d="M380,186 Q382,176 384,186" stroke="#4ade80" strokeWidth="1.5" fill="none" />
+      {/* Small butterfly */}
+      <g transform="translate(150,45)" opacity="0.5">
+        <ellipse cx="-5" cy="0" rx="5" ry="3" fill="#c084fc" />
+        <ellipse cx="5" cy="0" rx="5" ry="3" fill="#c084fc" />
+        <line x1="0" y1="-3" x2="0" y2="3" stroke="#7c3aed" strokeWidth="1" />
+      </g>
+    </svg>
+  )
+}
+
 export default function Garden({ collectedWords, latestIndex }) {
   if (collectedWords.length === 0) return null
 
   return (
-    <div className="mt-4 p-4 bg-gradient-to-t from-green-100 to-green-50 rounded-xl border border-green-200">
-      <div className="flex flex-wrap justify-center gap-2">
+    <div className="mt-4 p-4 rounded-xl border border-green-200 relative overflow-hidden"
+         style={{ background: 'linear-gradient(to top, #dcfce7, #f0fdf4 40%, #ecfeff 70%, #bae6fd)' }}>
+      <GardenBackground />
+      <div className="flex flex-wrap justify-center gap-2 relative z-10">
         {collectedWords.map((word, i) => (
           <Flower key={i} index={i} word={word} isNew={i === latestIndex} />
         ))}
