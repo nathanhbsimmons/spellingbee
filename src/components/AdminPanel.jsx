@@ -9,10 +9,11 @@ export default function AdminPanel({ onSelectList, onClose }) {
   const [lists, setLists] = useState([])
   const [sessions, setSessions] = useState([])
   const [profiles, setProfiles] = useState([])
-  const [view, setView] = useState('lists') // 'lists' | 'history' | 'create' | 'edit' | 'pin' | 'profiles'
+  const [view, setView] = useState('lists') // 'lists' | 'history' | 'create' | 'edit' | 'pin' | 'profiles' | 'pin-prompt'
   const [authenticated, setAuthenticated] = useState(false)
   const [pinInput, setPinInput] = useState('')
   const [pinError, setPinError] = useState('')
+  const [pendingAction, setPendingAction] = useState(null)
 
   // Edit/create state
   const [editId, setEditId] = useState(null)
@@ -31,26 +32,39 @@ export default function AdminPanel({ onSelectList, onClose }) {
     }
   }, [])
 
+  // Always load data regardless of authentication
   useEffect(() => {
+    setLists(loadWordLists())
+    setSessions(loadSessions())
+    setProfiles(loadProfiles())
+  }, [view, authenticated])
+
+  function requireAuth(action) {
     if (authenticated) {
-      setLists(loadWordLists())
-      setSessions(loadSessions())
-      setProfiles(loadProfiles())
+      action()
+    } else {
+      setPendingAction(() => action)
+      setPinInput('')
+      setPinError('')
+      setView('pin-prompt')
     }
-  }, [authenticated, view])
+  }
 
   function handlePinSubmit(e) {
     e.preventDefault()
     if (verifyPin(pinInput)) {
       setAuthenticated(true)
       setPinError('')
+      if (pendingAction) {
+        pendingAction()
+        setPendingAction(null)
+      }
     } else {
       setPinError('Incorrect PIN')
     }
   }
 
   function parseSentencesFromWords(wordsText) {
-    // Parse words and build sentences map from current editSentences
     const words = wordsText.split('\n').map((w) => w.trim()).filter((w) => w.length > 0)
     return words
   }
@@ -79,16 +93,20 @@ export default function AdminPanel({ onSelectList, onClose }) {
   }
 
   function startEdit(list) {
-    setEditId(list.id)
-    setEditName(list.name)
-    setEditWords(list.words.join('\n'))
-    setEditSentences(list.sentences || {})
-    setView('edit')
+    requireAuth(() => {
+      setEditId(list.id)
+      setEditName(list.name)
+      setEditWords(list.words.join('\n'))
+      setEditSentences(list.sentences || {})
+      setView('edit')
+    })
   }
 
   function handleDelete(id) {
-    deleteWordList(id)
-    setLists(loadWordLists())
+    requireAuth(() => {
+      deleteWordList(id)
+      setLists(loadWordLists())
+    })
   }
 
   function handleSetPin(e) {
@@ -126,10 +144,11 @@ export default function AdminPanel({ onSelectList, onClose }) {
   // Get current words from the edit textarea for sentence fields
   const currentWords = editWords.split('\n').map((w) => w.trim()).filter((w) => w.length > 0)
 
-  if (!authenticated) {
+  if (view === 'pin-prompt') {
     return (
       <div className="bg-white rounded-2xl shadow-lg p-8 animate-[fade-in-up_0.3s_ease-out]">
         <h2 className="text-2xl font-bold text-center text-indigo-600 mb-4">Parent Access</h2>
+        <p className="text-center text-gray-500 mb-4 text-sm">Enter PIN to make changes</p>
         <form onSubmit={handlePinSubmit}>
           <input
             type="password"
@@ -145,8 +164,8 @@ export default function AdminPanel({ onSelectList, onClose }) {
             Unlock
           </button>
         </form>
-        <button onClick={onClose} className="mt-3 w-full text-gray-400 text-sm hover:text-gray-600">
-          Back
+        <button onClick={() => { setPendingAction(null); setView('lists') }} className="mt-3 w-full text-gray-400 text-sm hover:text-gray-600">
+          Cancel
         </button>
       </div>
     )
@@ -327,7 +346,7 @@ export default function AdminPanel({ onSelectList, onClose }) {
     )
   }
 
-  // Default: lists view
+  // Default: lists view (always accessible without PIN)
   return (
     <div className="bg-white rounded-2xl shadow-lg p-8 animate-[fade-in-up_0.3s_ease-out]">
       <h2 className="text-2xl font-bold text-center text-indigo-600 mb-4">Word Lists</h2>
@@ -364,7 +383,7 @@ export default function AdminPanel({ onSelectList, onClose }) {
 
       <div className="space-y-2">
         <button
-          onClick={() => setView('create')}
+          onClick={() => requireAuth(() => setView('create'))}
           className="w-full bg-indigo-600 text-white py-3 rounded-xl font-semibold
                      hover:bg-indigo-700 transition-colors"
         >
@@ -379,14 +398,14 @@ export default function AdminPanel({ onSelectList, onClose }) {
             History
           </button>
           <button
-            onClick={() => setView('profiles')}
+            onClick={() => requireAuth(() => setView('profiles'))}
             className="flex-1 bg-gray-100 text-gray-600 py-2 rounded-xl text-sm font-medium
                        hover:bg-gray-200 transition-colors"
           >
             Profiles
           </button>
           <button
-            onClick={() => setView('pin')}
+            onClick={() => requireAuth(() => setView('pin'))}
             className="flex-1 bg-gray-100 text-gray-600 py-2 rounded-xl text-sm font-medium
                        hover:bg-gray-200 transition-colors"
           >

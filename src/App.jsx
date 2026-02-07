@@ -21,6 +21,15 @@ const SCREENS = {
   COMPLETE: 'complete',
 }
 
+function shuffleArray(arr) {
+  const shuffled = [...arr]
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+  }
+  return shuffled
+}
+
 export default function App() {
   const [screen, setScreen] = useState(hasSeenWelcome() ? SCREENS.PROFILE : SCREENS.WELCOME)
   const [words, setWords] = useState([])
@@ -40,7 +49,7 @@ export default function App() {
   }
 
   function handleStartPractice(wordList) {
-    setWords(wordList)
+    setWords(shuffleArray(wordList))
     setSentences({})
     setListName('')
     setCollectedWords([])
@@ -48,7 +57,7 @@ export default function App() {
   }
 
   function handleSelectList(list) {
-    setWords(list.words)
+    setWords(shuffleArray(list.words))
     setSentences(list.sentences || {})
     setListName(list.name)
     setCollectedWords([])
@@ -102,6 +111,7 @@ export default function App() {
         {screen === SCREENS.SETUP && (
           <WordListSetup
             onStart={handleStartPractice}
+            onSelectList={handleSelectList}
             onManageLists={() => setScreen(SCREENS.ADMIN)}
             onShowTutorial={() => setScreen(SCREENS.WELCOME)}
           />
@@ -113,10 +123,10 @@ export default function App() {
           />
         )}
         {screen === SCREENS.THEME && (
-          <ThemeSelector selectedTheme={theme} onSelect={handleThemeSelected} />
+          <ThemeSelector selectedTheme={theme} onSelect={handleThemeSelected} onBack={() => setScreen(SCREENS.SETUP)} />
         )}
         {screen === SCREENS.MODE && (
-          <ModeSelector onSelect={handleModeSelected} />
+          <ModeSelector onSelect={handleModeSelected} onBack={() => setScreen(SCREENS.THEME)} />
         )}
         {screen === SCREENS.PRACTICE && (
           <Practice
@@ -125,6 +135,7 @@ export default function App() {
             collectedWords={collectedWords}
             onCollect={handleCollectWord}
             onComplete={handlePracticeComplete}
+            onBack={handleStartOver}
             ThemeVisualization={ThemeComponent}
             mode={practiceMode}
           />

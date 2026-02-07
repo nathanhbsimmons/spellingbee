@@ -38,4 +38,22 @@ describe('ThemeSelector', () => {
     const treasureBtn = screen.getByText('Treasure').closest('button')
     expect(treasureBtn.className).toContain('border-indigo-500')
   })
+
+  it('shows back button when onBack is provided', () => {
+    render(<ThemeSelector selectedTheme="garden" onSelect={() => {}} onBack={() => {}} />)
+    expect(screen.getByText('Back')).toBeInTheDocument()
+  })
+
+  it('calls onBack when back button is clicked', async () => {
+    const user = userEvent.setup()
+    const onBack = vi.fn()
+    render(<ThemeSelector selectedTheme="garden" onSelect={() => {}} onBack={onBack} />)
+    await user.click(screen.getByText('Back'))
+    expect(onBack).toHaveBeenCalled()
+  })
+
+  it('does not show back button when onBack is not provided', () => {
+    render(<ThemeSelector selectedTheme="garden" onSelect={() => {}} />)
+    expect(screen.queryByText('Back')).not.toBeInTheDocument()
+  })
 })

@@ -30,4 +30,17 @@ describe('ModeSelector', () => {
     await user.click(screen.getByText('Letter Scramble'))
     expect(onSelect).toHaveBeenCalledWith('scramble')
   })
+
+  it('shows back button when onBack is provided', () => {
+    render(<ModeSelector onSelect={() => {}} onBack={() => {}} />)
+    expect(screen.getByText('Back')).toBeInTheDocument()
+  })
+
+  it('calls onBack when back button is clicked', async () => {
+    const user = userEvent.setup()
+    const onBack = vi.fn()
+    render(<ModeSelector onSelect={() => {}} onBack={onBack} />)
+    await user.click(screen.getByText('Back'))
+    expect(onBack).toHaveBeenCalled()
+  })
 })

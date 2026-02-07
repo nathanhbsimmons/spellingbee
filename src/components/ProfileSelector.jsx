@@ -59,6 +59,10 @@ export default function ProfileSelector({ onDone }) {
       >
         Continue without a profile
       </button>
+
+      <p className="mt-4 text-center text-gray-300 text-xs" data-testid="storage-notice">
+        Data is saved on this device only. Profiles and word lists won't appear on other devices.
+      </p>
     </div>
   )
 }
