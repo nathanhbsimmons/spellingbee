@@ -168,4 +168,76 @@ describe('WordListSetup', () => {
     render(<WordListSetup onStart={() => {}} onSelectList={() => {}} onManageLists={() => {}} />)
     expect(screen.getByText('Manage Word Lists')).toBeInTheDocument()
   })
+
+  // Sprint 1: Navigation & Profile Options on Main Menu
+  it('shows Switch Profile button when onBackToProfiles is provided', () => {
+    render(<WordListSetup onStart={() => {}} onSelectList={() => {}} onBackToProfiles={() => {}} />)
+    expect(screen.getByRole('button', { name: /switch profile/i })).toBeInTheDocument()
+  })
+
+  it('does not show Switch Profile button when onBackToProfiles is not provided', () => {
+    render(<WordListSetup onStart={() => {}} onSelectList={() => {}} />)
+    expect(screen.queryByRole('button', { name: /switch profile/i })).not.toBeInTheDocument()
+  })
+
+  it('calls onBackToProfiles when Switch Profile is clicked', async () => {
+    const user = userEvent.setup()
+    const onBackToProfiles = vi.fn()
+    render(<WordListSetup onStart={() => {}} onSelectList={() => {}} onBackToProfiles={onBackToProfiles} />)
+    await user.click(screen.getByRole('button', { name: /switch profile/i }))
+    expect(onBackToProfiles).toHaveBeenCalled()
+  })
+
+  // Sprint 6: Practice History Drill-Down
+  it('navigates to session detail when a history entry is clicked', async () => {
+    const user = userEvent.setup()
+    saveSession({
+      listName: 'Week 2',
+      words: ['apple', 'banana'],
+      typedWords: ['appel', 'banana'],
+      theme: 'garden',
+      mode: 'standard',
+    })
+    render(<WordListSetup onStart={() => {}} onSelectList={() => {}} />)
+    await user.click(screen.getByRole('button', { name: /view history/i }))
+    await user.click(screen.getByText('Week 2'))
+    // Should show session detail view
+    expect(screen.getByTestId('session-word-0')).toBeInTheDocument()
+    expect(screen.getByTestId('session-word-1')).toBeInTheDocument()
+  })
+
+  it('shows correct/incorrect breakdown in session detail', async () => {
+    const user = userEvent.setup()
+    saveSession({
+      listName: 'Week 3',
+      words: ['apple', 'banana'],
+      typedWords: ['appel', 'banana'],
+      theme: 'garden',
+      mode: 'standard',
+    })
+    render(<WordListSetup onStart={() => {}} onSelectList={() => {}} />)
+    await user.click(screen.getByRole('button', { name: /view history/i }))
+    await user.click(screen.getByText('Week 3'))
+    // banana is correct
+    expect(screen.getByText('banana')).toBeInTheDocument()
+    // appel is incorrect, should show correct spelling
+    expect(screen.getByText('appel')).toBeInTheDocument()
+    expect(screen.getByText('(correct: apple)')).toBeInTheDocument()
+  })
+
+  it('navigates back from session detail to history', async () => {
+    const user = userEvent.setup()
+    saveSession({
+      listName: 'Week 4',
+      words: ['cat'],
+      typedWords: ['cat'],
+      theme: 'garden',
+      mode: 'standard',
+    })
+    render(<WordListSetup onStart={() => {}} onSelectList={() => {}} />)
+    await user.click(screen.getByRole('button', { name: /view history/i }))
+    await user.click(screen.getByText('Week 4'))
+    await user.click(screen.getByText('Back to History'))
+    expect(screen.getByText('Practice History')).toBeInTheDocument()
+  })
 })

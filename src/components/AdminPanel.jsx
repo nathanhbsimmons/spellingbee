@@ -5,7 +5,7 @@ import {
   loadProfiles, createProfile, deleteProfile,
 } from '../storage'
 
-export default function AdminPanel({ onSelectList, onClose }) {
+export default function AdminPanel({ onSelectList, onClose, onBackToProfiles }) {
   const [lists, setLists] = useState([])
   const [sessions, setSessions] = useState([])
   const [profiles, setProfiles] = useState([])
@@ -309,6 +309,15 @@ export default function AdminPanel({ onSelectList, onClose }) {
           </button>
         </form>
 
+        {onBackToProfiles && (
+          <button
+            onClick={onBackToProfiles}
+            className="w-full bg-indigo-600 text-white py-2 rounded-xl text-sm font-semibold
+                       hover:bg-indigo-700 transition-colors mb-2"
+          >
+            Go to Profile Selection
+          </button>
+        )}
         <button onClick={() => setView('lists')} className="w-full text-gray-400 text-sm hover:text-gray-600">
           Back to Lists
         </button>
