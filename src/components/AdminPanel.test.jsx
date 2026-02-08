@@ -151,4 +151,42 @@ describe('AdminPanel', () => {
     await user.click(screen.getByRole('button', { name: /history/i }))
     expect(screen.getByText('Practice History')).toBeInTheDocument()
   })
+
+  // Sprint 7: Broken Navigation Loop in Profile Management
+  it('shows Go to Profile Selection button in profiles view when onBackToProfiles is provided', async () => {
+    const user = userEvent.setup()
+    render(<AdminPanel onSelectList={() => {}} onClose={() => {}} onBackToProfiles={() => {}} />)
+    await user.click(screen.getByRole('button', { name: /profiles/i }))
+    expect(screen.getByRole('button', { name: /go to profile selection/i })).toBeInTheDocument()
+  })
+
+  it('does not show Go to Profile Selection button when onBackToProfiles is not provided', async () => {
+    const user = userEvent.setup()
+    render(<AdminPanel onSelectList={() => {}} onClose={() => {}} />)
+    await user.click(screen.getByRole('button', { name: /profiles/i }))
+    expect(screen.queryByRole('button', { name: /go to profile selection/i })).not.toBeInTheDocument()
+  })
+
+  it('calls onBackToProfiles when Go to Profile Selection is clicked', async () => {
+    const user = userEvent.setup()
+    const onBackToProfiles = vi.fn()
+    render(<AdminPanel onSelectList={() => {}} onClose={() => {}} onBackToProfiles={onBackToProfiles} />)
+    await user.click(screen.getByRole('button', { name: /profiles/i }))
+    await user.click(screen.getByRole('button', { name: /go to profile selection/i }))
+    expect(onBackToProfiles).toHaveBeenCalled()
+  })
+
+  it('allows full flow: add profile then navigate to profile selection', async () => {
+    const user = userEvent.setup()
+    const onBackToProfiles = vi.fn()
+    render(<AdminPanel onSelectList={() => {}} onClose={() => {}} onBackToProfiles={onBackToProfiles} />)
+    await user.click(screen.getByRole('button', { name: /profiles/i }))
+    // Add a new profile
+    await user.type(screen.getByPlaceholderText(/child's name/i), 'Charlie')
+    await user.click(screen.getByRole('button', { name: /add/i }))
+    expect(screen.getByText('Charlie')).toBeInTheDocument()
+    // Navigate to profile selection
+    await user.click(screen.getByRole('button', { name: /go to profile selection/i }))
+    expect(onBackToProfiles).toHaveBeenCalled()
+  })
 })

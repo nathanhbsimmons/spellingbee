@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 import { loadWordLists, loadSessions, getActiveProfile } from '../storage'
 
-export default function WordListSetup({ onStart, onSelectList, onManageLists, onShowTutorial }) {
-  const [view, setView] = useState('hub') // 'hub' | 'quick' | 'history'
+export default function WordListSetup({ onStart, onSelectList, onManageLists, onShowTutorial, onBackToProfiles }) {
+  const [view, setView] = useState('hub') // 'hub' | 'quick' | 'history' | 'session-detail'
   const [input, setInput] = useState('')
   const [lists, setLists] = useState([])
   const [sessions, setSessions] = useState([])
+  const [selectedSession, setSelectedSession] = useState(null)
 
   useEffect(() => {
     setLists(loadWordLists())
@@ -75,6 +76,54 @@ export default function WordListSetup({ onStart, onSelectList, onManageLists, on
     )
   }
 
+  if (view === 'session-detail' && selectedSession) {
+    const s = selectedSession
+    return (
+      <div className="bg-white rounded-2xl shadow-lg p-8 animate-[fade-in-up_0.3s_ease-out]">
+        <h2 className="text-2xl font-bold text-center text-indigo-600 mb-2">
+          {s.listName || 'Practice Session'}
+        </h2>
+        <p className="text-center text-gray-400 text-sm mb-4">
+          {new Date(s.completedAt).toLocaleDateString()} · Theme: {s.theme || 'garden'}
+          {s.mode === 'scramble' ? ' · Scramble' : ''}
+        </p>
+        <ul className="space-y-2">
+          {(s.words || []).map((word, j) => {
+            const typed = s.typedWords?.[j] || ''
+            const correct = typed.toLowerCase() === word.toLowerCase()
+            return (
+              <li
+                key={j}
+                className={`rounded-lg px-4 py-2 ${correct ? 'bg-green-50' : 'bg-amber-50'}`}
+                data-testid={`session-word-${j}`}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className={`font-medium ${correct ? 'text-green-700' : 'text-gray-800'}`}>
+                      {typed}
+                    </span>
+                    {!correct && (
+                      <span className="text-sm text-gray-400 ml-2">(correct: {word})</span>
+                    )}
+                  </div>
+                  {correct && (
+                    <span className="text-green-500" aria-label="correct">&#10003;</span>
+                  )}
+                </div>
+              </li>
+            )
+          })}
+        </ul>
+        <button
+          onClick={() => { setSelectedSession(null); setView('history') }}
+          className="mt-4 w-full text-gray-400 text-sm hover:text-gray-600"
+        >
+          Back to History
+        </button>
+      </div>
+    )
+  }
+
   if (view === 'history') {
     return (
       <div className="bg-white rounded-2xl shadow-lg p-8 animate-[fade-in-up_0.3s_ease-out]">
@@ -89,17 +138,22 @@ export default function WordListSetup({ onStart, onSelectList, onManageLists, on
               ).length || 0
               const total = s.words?.length || 0
               return (
-                <li key={i} className="bg-gray-50 rounded-lg p-3">
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium text-gray-700">{s.listName || 'Practice Session'}</span>
-                    <span className="text-xs text-gray-400">
-                      {new Date(s.completedAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {correct}/{total} correct · Theme: {s.theme || 'garden'}
-                    {s.mode === 'scramble' ? ' · Scramble' : ''}
-                  </p>
+                <li key={i}>
+                  <button
+                    onClick={() => { setSelectedSession(s); setView('session-detail') }}
+                    className="w-full text-left bg-gray-50 rounded-lg p-3 hover:bg-indigo-50 transition-colors"
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium text-gray-700">{s.listName || 'Practice Session'}</span>
+                      <span className="text-xs text-gray-400">
+                        {new Date(s.completedAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-500 mt-1">
+                      {correct}/{total} correct · Theme: {s.theme || 'garden'}
+                      {s.mode === 'scramble' ? ' · Scramble' : ''}
+                    </p>
+                  </button>
                 </li>
               )
             })}
@@ -184,6 +238,16 @@ export default function WordListSetup({ onStart, onSelectList, onManageLists, on
           className="mt-1 w-full text-gray-400 text-sm hover:text-gray-600 transition-colors"
         >
           How It Works
+        </button>
+      )}
+
+      {onBackToProfiles && (
+        <button
+          type="button"
+          onClick={onBackToProfiles}
+          className="mt-1 w-full text-gray-400 text-sm hover:text-gray-600 transition-colors"
+        >
+          Switch Profile
         </button>
       )}
     </div>

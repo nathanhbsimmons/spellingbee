@@ -114,12 +114,14 @@ export default function App() {
             onSelectList={handleSelectList}
             onManageLists={() => setScreen(SCREENS.ADMIN)}
             onShowTutorial={() => setScreen(SCREENS.WELCOME)}
+            onBackToProfiles={() => setScreen(SCREENS.PROFILE)}
           />
         )}
         {screen === SCREENS.ADMIN && (
           <AdminPanel
             onSelectList={handleSelectList}
             onClose={() => setScreen(SCREENS.SETUP)}
+            onBackToProfiles={() => setScreen(SCREENS.PROFILE)}
           />
         )}
         {screen === SCREENS.THEME && (
@@ -147,6 +149,9 @@ export default function App() {
             onStartOver={handleStartOver}
             ThemeVisualization={ThemeComponent}
             streak={streak}
+            theme={theme}
+            hasProfile={!!getActiveProfile()}
+            onCreateProfile={() => setScreen(SCREENS.PROFILE)}
           />
         )}
       </div>

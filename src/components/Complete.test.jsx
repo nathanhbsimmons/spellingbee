@@ -76,10 +76,11 @@ describe('Complete (Review Mode)', () => {
     expect(screen.getByTestId('theme-item-2')).toBeInTheDocument()
   })
 
-  it('calls onStartOver when button is clicked', async () => {
+  it('calls onStartOver when button is clicked after parent review', async () => {
     const user = userEvent.setup()
     const onStartOver = vi.fn()
     render(<Complete words={words} collectedWords={collectedWords} onStartOver={onStartOver} />)
+    await user.click(screen.getByTestId('parent-reviewed-checkbox'))
     await user.click(screen.getByRole('button', { name: /collect more words/i }))
     expect(onStartOver).toHaveBeenCalled()
   })
@@ -112,5 +113,98 @@ describe('Complete (Review Mode)', () => {
   it('does not show streak display when streak is 0', () => {
     render(<Complete words={words} collectedWords={collectedWords} onStartOver={() => {}} streak={0} />)
     expect(screen.queryByTestId('streak-display')).not.toBeInTheDocument()
+  })
+
+  // Sprint 2: Theme-specific review text
+  it('shows aquarium-themed text for aquarium theme', () => {
+    render(<Complete words={words} collectedWords={collectedWords} onStartOver={() => {}} theme="aquarium" />)
+    expect(screen.getByText('2 caught, 1 to catch')).toBeInTheDocument()
+  })
+
+  it('shows space-themed text for space theme', () => {
+    render(<Complete words={words} collectedWords={collectedWords} onStartOver={() => {}} theme="space" />)
+    expect(screen.getByText('2 launched, 1 to launch')).toBeInTheDocument()
+  })
+
+  it('shows treasure-themed text for treasure theme', () => {
+    render(<Complete words={words} collectedWords={collectedWords} onStartOver={() => {}} theme="treasure" />)
+    expect(screen.getByText('2 collected, 1 to find')).toBeInTheDocument()
+  })
+
+  it('shows theme-specific all-done text for aquarium', () => {
+    render(<Complete words={words} collectedWords={['apple', 'banana', 'cherry']} onStartOver={() => {}} theme="aquarium" />)
+    expect(screen.getByText('All fish caught!')).toBeInTheDocument()
+  })
+
+  it('shows garden-themed text by default', () => {
+    render(<Complete words={words} collectedWords={collectedWords} onStartOver={() => {}} />)
+    expect(screen.getByText('2 bloomed, 1 to tend')).toBeInTheDocument()
+  })
+
+  // Sprint 4: Parent review validation
+  it('shows a Reviewed with parent checkbox', () => {
+    render(<Complete words={words} collectedWords={collectedWords} onStartOver={() => {}} />)
+    expect(screen.getByTestId('parent-reviewed-checkbox')).toBeInTheDocument()
+    expect(screen.getByText(/reviewed with parent/i)).toBeInTheDocument()
+  })
+
+  it('disables Collect More Words button until parent review checkbox is checked', () => {
+    render(<Complete words={words} collectedWords={collectedWords} onStartOver={() => {}} />)
+    expect(screen.getByRole('button', { name: /collect more words/i })).toBeDisabled()
+  })
+
+  it('enables Collect More Words button after checking parent review', async () => {
+    const user = userEvent.setup()
+    render(<Complete words={words} collectedWords={collectedWords} onStartOver={() => {}} />)
+    await user.click(screen.getByTestId('parent-reviewed-checkbox'))
+    expect(screen.getByRole('button', { name: /collect more words/i })).toBeEnabled()
+  })
+
+  it('does not call onStartOver when Collect More Words is clicked without parent review', async () => {
+    const user = userEvent.setup()
+    const onStartOver = vi.fn()
+    render(<Complete words={words} collectedWords={collectedWords} onStartOver={onStartOver} />)
+    await user.click(screen.getByRole('button', { name: /collect more words/i }))
+    expect(onStartOver).not.toHaveBeenCalled()
+  })
+
+  // Sprint 5: Profile conversion modal
+  it('shows profile modal when clicking Collect More Words without a profile', async () => {
+    const user = userEvent.setup()
+    render(<Complete words={words} collectedWords={collectedWords} onStartOver={() => {}} hasProfile={false} onCreateProfile={() => {}} />)
+    await user.click(screen.getByTestId('parent-reviewed-checkbox'))
+    await user.click(screen.getByRole('button', { name: /collect more words/i }))
+    expect(screen.getByTestId('profile-modal')).toBeInTheDocument()
+    expect(screen.getByText(/save your progress/i)).toBeInTheDocument()
+  })
+
+  it('does not show profile modal when user has a profile', async () => {
+    const user = userEvent.setup()
+    const onStartOver = vi.fn()
+    render(<Complete words={words} collectedWords={collectedWords} onStartOver={onStartOver} hasProfile={true} />)
+    await user.click(screen.getByTestId('parent-reviewed-checkbox'))
+    await user.click(screen.getByRole('button', { name: /collect more words/i }))
+    expect(screen.queryByTestId('profile-modal')).not.toBeInTheDocument()
+    expect(onStartOver).toHaveBeenCalled()
+  })
+
+  it('calls onCreateProfile from profile modal', async () => {
+    const user = userEvent.setup()
+    const onCreateProfile = vi.fn()
+    render(<Complete words={words} collectedWords={collectedWords} onStartOver={() => {}} hasProfile={false} onCreateProfile={onCreateProfile} />)
+    await user.click(screen.getByTestId('parent-reviewed-checkbox'))
+    await user.click(screen.getByRole('button', { name: /collect more words/i }))
+    await user.click(screen.getByRole('button', { name: /create a profile/i }))
+    expect(onCreateProfile).toHaveBeenCalled()
+  })
+
+  it('allows continuing without profile from modal', async () => {
+    const user = userEvent.setup()
+    const onStartOver = vi.fn()
+    render(<Complete words={words} collectedWords={collectedWords} onStartOver={onStartOver} hasProfile={false} onCreateProfile={() => {}} />)
+    await user.click(screen.getByTestId('parent-reviewed-checkbox'))
+    await user.click(screen.getByRole('button', { name: /collect more words/i }))
+    await user.click(screen.getByText(/continue without a profile/i))
+    expect(onStartOver).toHaveBeenCalled()
   })
 })
