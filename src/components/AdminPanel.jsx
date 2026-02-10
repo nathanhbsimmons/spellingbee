@@ -3,12 +3,15 @@ import {
   loadWordLists, createWordList, updateWordList, deleteWordList,
   loadSessions, getPin, setPin, verifyPin,
   loadProfiles, createProfile, deleteProfile,
-} from '../storage'
+} from '../db'
+import { useFamily } from '../contexts/FamilyContext'
 
 export default function AdminPanel({ onSelectList, onClose, onBackToProfiles }) {
+  const { familyId } = useFamily()
   const [lists, setLists] = useState([])
   const [sessions, setSessions] = useState([])
   const [profiles, setProfiles] = useState([])
+  const [loading, setLoading] = useState(true)
   const [view, setView] = useState('lists') // 'lists' | 'history' | 'create' | 'edit' | 'pin' | 'profiles' | 'pin-prompt'
   const [authenticated, setAuthenticated] = useState(false)
   const [pinInput, setPinInput] = useState('')
@@ -26,18 +29,34 @@ export default function AdminPanel({ onSelectList, onClose, onBackToProfiles }) 
   const [newProfileName, setNewProfileName] = useState('')
 
   useEffect(() => {
-    const hasPin = getPin()
-    if (!hasPin) {
-      setAuthenticated(true)
+    async function checkPin() {
+      const hasPin = await getPin(familyId)
+      if (!hasPin) {
+        setAuthenticated(true)
+      }
     }
-  }, [])
+    if (familyId) {
+      checkPin()
+    }
+  }, [familyId])
 
   // Always load data regardless of authentication
   useEffect(() => {
-    setLists(loadWordLists())
-    setSessions(loadSessions())
-    setProfiles(loadProfiles())
-  }, [view, authenticated])
+    async function loadData() {
+      if (!familyId) return
+      setLoading(true)
+      const [listsData, sessionsData, profilesData] = await Promise.all([
+        loadWordLists(familyId),
+        loadSessions(familyId),
+        loadProfiles(familyId),
+      ])
+      setLists(listsData)
+      setSessions(sessionsData)
+      setProfiles(profilesData)
+      setLoading(false)
+    }
+    loadData()
+  }, [familyId, view, authenticated])
 
   function requireAuth(action) {
     if (authenticated) {
@@ -50,9 +69,10 @@ export default function AdminPanel({ onSelectList, onClose, onBackToProfiles }) 
     }
   }
 
-  function handlePinSubmit(e) {
+  async function handlePinSubmit(e) {
     e.preventDefault()
-    if (verifyPin(pinInput)) {
+    const isValid = await verifyPin(familyId, pinInput)
+    if (isValid) {
       setAuthenticated(true)
       setPinError('')
       if (pendingAction) {
@@ -69,22 +89,22 @@ export default function AdminPanel({ onSelectList, onClose, onBackToProfiles }) 
     return words
   }
 
-  function handleCreate(e) {
+  async function handleCreate(e) {
     e.preventDefault()
     const words = parseSentencesFromWords(editWords)
     if (!editName.trim() || words.length === 0) return
-    createWordList(editName.trim(), words, editSentences)
+    await createWordList(familyId, editName.trim(), words, editSentences)
     setEditName('')
     setEditWords('')
     setEditSentences({})
     setView('lists')
   }
 
-  function handleEdit(e) {
+  async function handleEdit(e) {
     e.preventDefault()
     const words = parseSentencesFromWords(editWords)
     if (!editName.trim() || words.length === 0) return
-    updateWordList(editId, { name: editName.trim(), words, sentences: editSentences })
+    await updateWordList(familyId, editId, { name: editName.trim(), words, sentences: editSentences })
     setEditId(null)
     setEditName('')
     setEditWords('')
@@ -103,15 +123,16 @@ export default function AdminPanel({ onSelectList, onClose, onBackToProfiles }) 
   }
 
   function handleDelete(id) {
-    requireAuth(() => {
-      deleteWordList(id)
-      setLists(loadWordLists())
+    requireAuth(async () => {
+      await deleteWordList(familyId, id)
+      const listsData = await loadWordLists(familyId)
+      setLists(listsData)
     })
   }
 
-  function handleSetPin(e) {
+  async function handleSetPin(e) {
     e.preventDefault()
-    setPin(newPin)
+    await setPin(familyId, newPin)
     setNewPin('')
     setView('lists')
   }
@@ -128,21 +149,31 @@ export default function AdminPanel({ onSelectList, onClose, onBackToProfiles }) 
     })
   }
 
-  function handleCreateProfile(e) {
+  async function handleCreateProfile(e) {
     e.preventDefault()
     if (!newProfileName.trim()) return
-    createProfile(newProfileName.trim())
+    await createProfile(familyId, newProfileName.trim())
     setNewProfileName('')
-    setProfiles(loadProfiles())
+    const profilesData = await loadProfiles(familyId)
+    setProfiles(profilesData)
   }
 
-  function handleDeleteProfile(id) {
-    deleteProfile(id)
-    setProfiles(loadProfiles())
+  async function handleDeleteProfile(id) {
+    await deleteProfile(familyId, id)
+    const profilesData = await loadProfiles(familyId)
+    setProfiles(profilesData)
   }
 
   // Get current words from the edit textarea for sentence fields
   const currentWords = editWords.split('\n').map((w) => w.trim()).filter((w) => w.length > 0)
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-2xl shadow-lg p-8 animate-[fade-in-up_0.3s_ease-out]">
+        <div className="text-center text-gray-400">Loading...</div>
+      </div>
+    )
+  }
 
   if (view === 'pin-prompt') {
     return (

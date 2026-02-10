@@ -1,18 +1,32 @@
 import { useState, useEffect } from 'react'
-import { loadWordLists, loadSessions, getActiveProfile } from '../storage'
+import { loadWordLists, loadSessions } from '../db'
+import { getActiveProfile } from '../storage'
+import { useFamily } from '../contexts/FamilyContext'
 
 export default function WordListSetup({ onStart, onSelectList, onManageLists, onShowTutorial, onBackToProfiles }) {
+  const { familyId } = useFamily()
   const [view, setView] = useState('hub') // 'hub' | 'quick' | 'history' | 'session-detail'
   const [input, setInput] = useState('')
   const [lists, setLists] = useState([])
   const [sessions, setSessions] = useState([])
   const [selectedSession, setSelectedSession] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    setLists(loadWordLists())
-    const profile = getActiveProfile()
-    setSessions(loadSessions(profile?.id))
-  }, [view])
+    async function loadData() {
+      if (!familyId) return
+      setLoading(true)
+      const profile = getActiveProfile()
+      const [listsData, sessionsData] = await Promise.all([
+        loadWordLists(familyId),
+        loadSessions(familyId, profile?.id),
+      ])
+      setLists(listsData)
+      setSessions(sessionsData)
+      setLoading(false)
+    }
+    loadData()
+  }, [familyId, view])
 
   function handleSubmit(e) {
     e.preventDefault()
@@ -23,6 +37,14 @@ export default function WordListSetup({ onStart, onSelectList, onManageLists, on
 
     if (wordList.length === 0) return
     onStart(wordList)
+  }
+
+  if (loading && view !== 'quick') {
+    return (
+      <div className="bg-white rounded-2xl shadow-lg p-8 animate-[fade-in-up_0.3s_ease-out]">
+        <div className="text-center text-gray-400">Loading...</div>
+      </div>
+    )
   }
 
   if (view === 'quick') {
