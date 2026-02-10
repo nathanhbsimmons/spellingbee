@@ -9,7 +9,11 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "firebase:login": "firebase login",
+    "firebase:deploy": "firebase deploy",
+    "firebase:deploy:rules": "firebase deploy --only firestore:rules",
+    "firebase:deploy:hosting": "npm run build && firebase deploy --only hosting"
   },
   "dependencies": {
     "firebase": "^12.9.0",
@@ -28,6 +32,7 @@
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
+    "firebase-tools": "^15.5.1",
     "globals": "^16.5.0",
     "jsdom": "^28.0.0",
     "tailwindcss": "^4.1.18",
