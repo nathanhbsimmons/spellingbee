@@ -12,6 +12,7 @@ import { THEMES, DEFAULT_THEME } from './components/themes'
 import { saveSession, getStreak } from './db'
 import { getActiveProfile, hasSeenWelcome } from './storage'
 import { useFamily, FamilyProvider } from './contexts/FamilyContext'
+import { ToastProvider } from './components/Toast'
 
 const SCREENS = {
   WELCOME: 'welcome',
@@ -172,7 +173,9 @@ function AppContent() {
 export default function App() {
   return (
     <FamilyProvider>
-      <AppContent />
+      <ToastProvider>
+        <AppContent />
+      </ToastProvider>
     </FamilyProvider>
   )
 }
