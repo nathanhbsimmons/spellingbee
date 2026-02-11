@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import Practice from './Practice'
 
@@ -105,11 +105,14 @@ describe('Practice', () => {
     expect(screen.getByRole('button', { name: /play word/i })).toBeInTheDocument()
   })
 
-  it('auto-plays the word on mount', () => {
+  it('auto-plays the word on mount', async () => {
+    mockSpeak.mockClear()
     render(<Practice {...defaultProps} />)
-    expect(mockSpeak).toHaveBeenCalled()
-    const utterance = mockSpeak.mock.calls[0][0]
-    expect(utterance.text).toBe('apple')
+    await waitFor(() => {
+      expect(mockSpeak).toHaveBeenCalled()
+    })
+    const lastCall = mockSpeak.mock.calls[mockSpeak.mock.calls.length - 1]
+    expect(lastCall[0].text).toBe('apple')
   })
 
   it('plays the word when Play Word button is clicked', async () => {
@@ -117,7 +120,9 @@ describe('Practice', () => {
     render(<Practice {...defaultProps} />)
     mockSpeak.mockClear()
     await user.click(screen.getByRole('button', { name: /play word/i }))
-    expect(mockSpeak).toHaveBeenCalled()
+    await waitFor(() => {
+      expect(mockSpeak).toHaveBeenCalled()
+    })
     const utterance = mockSpeak.mock.calls[0][0]
     expect(utterance.text).toBe('apple')
   })
@@ -148,10 +153,12 @@ describe('Practice', () => {
     expect(screen.getByRole('button', { name: /play word/i })).toBeInTheDocument()
   })
 
-  it('auto-plays audio in scramble mode', () => {
+  it('auto-plays audio in scramble mode', async () => {
     mockSpeak.mockClear()
     render(<Practice {...defaultProps} mode="scramble" />)
-    expect(mockSpeak).toHaveBeenCalled()
+    await waitFor(() => {
+      expect(mockSpeak).toHaveBeenCalled()
+    })
     const utterance = mockSpeak.mock.calls[0][0]
     expect(utterance.text).toBe('apple')
   })
