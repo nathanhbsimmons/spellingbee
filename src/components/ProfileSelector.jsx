@@ -1,14 +1,25 @@
 import { useState, useEffect } from 'react'
-import { loadProfiles, getActiveProfile, setActiveProfile } from '../storage'
+import { loadProfiles } from '../db'
+import { getActiveProfile, setActiveProfile } from '../storage'
+import { useFamily } from '../contexts/FamilyContext'
 
 export default function ProfileSelector({ onDone }) {
+  const { familyId } = useFamily()
   const [profiles, setProfiles] = useState([])
   const [activeProfile, setActive] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    setProfiles(loadProfiles())
-    setActive(getActiveProfile())
-  }, [])
+    async function loadData() {
+      if (!familyId) return
+      setLoading(true)
+      const profilesData = await loadProfiles(familyId)
+      setProfiles(profilesData)
+      setActive(getActiveProfile())
+      setLoading(false)
+    }
+    loadData()
+  }, [familyId])
 
   function handleSelect(profile) {
     setActiveProfile(profile)
@@ -19,6 +30,14 @@ export default function ProfileSelector({ onDone }) {
   function handleSkip() {
     setActiveProfile(null)
     onDone()
+  }
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-2xl shadow-lg p-8 animate-[fade-in-up_0.3s_ease-out]">
+        <div className="text-center text-gray-400">Loading...</div>
+      </div>
+    )
   }
 
   return (
@@ -61,7 +80,7 @@ export default function ProfileSelector({ onDone }) {
       </button>
 
       <p className="mt-4 text-center text-gray-300 text-xs" data-testid="storage-notice">
-        Data is saved on this device only. Profiles and word lists won't appear on other devices.
+        Your data syncs across all devices connected to your family.
       </p>
     </div>
   )

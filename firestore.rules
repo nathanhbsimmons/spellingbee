@@ -1,0 +1,10 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow read/write access to all documents in a family collection
+    // Security is provided by obscurity of the familyId (UUID)
+    match /families/{familyId}/{document=**} {
+      allow read, write: if true;
+    }
+  }
+}

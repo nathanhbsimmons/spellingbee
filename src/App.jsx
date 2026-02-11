@@ -7,8 +7,11 @@ import Complete from './components/Complete'
 import AdminPanel from './components/AdminPanel'
 import ProfileSelector from './components/ProfileSelector'
 import ModeSelector from './components/ModeSelector'
+import FamilySetup from './components/FamilySetup'
 import { THEMES, DEFAULT_THEME } from './components/themes'
-import { saveSession, getActiveProfile, getStreak, hasSeenWelcome } from './storage'
+import { saveSession, getStreak } from './db'
+import { getActiveProfile, hasSeenWelcome } from './storage'
+import { useFamily, FamilyProvider } from './contexts/FamilyContext'
 
 const SCREENS = {
   WELCOME: 'welcome',
@@ -30,7 +33,8 @@ function shuffleArray(arr) {
   return shuffled
 }
 
-export default function App() {
+function AppContent() {
+  const { familyId } = useFamily()
   const [screen, setScreen] = useState(hasSeenWelcome() ? SCREENS.PROFILE : SCREENS.WELCOME)
   const [words, setWords] = useState([])
   const [sentences, setSentences] = useState({})
@@ -39,6 +43,11 @@ export default function App() {
   const [theme, setTheme] = useState(DEFAULT_THEME)
   const [practiceMode, setPracticeMode] = useState('standard')
   const [streak, setStreak] = useState(0)
+
+  // If no familyId, show family setup
+  if (!familyId) {
+    return <FamilySetup />
+  }
 
   function handleWelcomeDone() {
     setScreen(SCREENS.PROFILE)
@@ -78,16 +87,17 @@ export default function App() {
     setCollectedWords((prev) => [...prev, typed])
   }
 
-  function handlePracticeComplete(finalCollected) {
-    saveSession({
+  async function handlePracticeComplete(finalCollected) {
+    const profile = getActiveProfile()
+    await saveSession(familyId, {
       listName: listName || 'Quick Practice',
       words,
       typedWords: finalCollected,
       theme,
       mode: practiceMode,
-    })
-    const profile = getActiveProfile()
-    setStreak(getStreak(profile?.id))
+    }, profile?.id)
+    const streakCount = await getStreak(familyId, profile?.id || '_default')
+    setStreak(streakCount)
     setScreen(SCREENS.COMPLETE)
   }
 
@@ -156,5 +166,13 @@ export default function App() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function App() {
+  return (
+    <FamilyProvider>
+      <AppContent />
+    </FamilyProvider>
   )
 }
