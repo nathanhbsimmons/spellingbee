@@ -55,6 +55,10 @@ export default function Practice({ words, sentences = {}, collectedWords, onColl
     }
   }
 
+  // Guard against out-of-bounds after collecting the last word
+  // (parent re-renders with updated collectedWords before transitioning away)
+  if (currentIndex >= words.length) return null
+
   const currentWord = words[currentIndex]
   const currentSentence = sentences[currentWord]
 
