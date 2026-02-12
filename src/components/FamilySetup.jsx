@@ -131,7 +131,9 @@ export default function FamilySetup() {
   if (mode === 'view-code') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
+        <div className="w-full max-w-md">
+        <h1 className="text-5xl font-bold text-center text-indigo-600 mb-4 drop-shadow-sm">Bloom</h1>
+        <div className="w-full bg-white rounded-2xl shadow-xl p-8">
           <h1 className="text-3xl font-bold text-center mb-4 text-purple-900">
             Family Join Code 🔗
           </h1>
@@ -156,6 +158,7 @@ export default function FamilySetup() {
             Continue to App
           </button>
         </div>
+        </div>
       </div>
     )
   }
@@ -163,7 +166,9 @@ export default function FamilySetup() {
   if (mode === 'migrate') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
+        <div className="w-full max-w-md">
+        <h1 className="text-5xl font-bold text-center text-indigo-600 mb-4 drop-shadow-sm">Bloom</h1>
+        <div className="w-full bg-white rounded-2xl shadow-xl p-8">
           <h1 className="text-3xl font-bold text-center mb-4 text-purple-900">
             Import Existing Data? 📦
           </h1>
@@ -199,6 +204,7 @@ export default function FamilySetup() {
             Don't worry, your local data will remain on this device even if you skip.
           </p>
         </div>
+        </div>
       </div>
     )
   }
@@ -206,7 +212,9 @@ export default function FamilySetup() {
   if (mode === null) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
+        <div className="w-full max-w-md">
+        <h1 className="text-5xl font-bold text-center text-indigo-600 mb-4 drop-shadow-sm">Bloom</h1>
+        <div className="w-full bg-white rounded-2xl shadow-xl p-8">
           <h1 className="text-3xl font-bold text-center mb-2 text-purple-900">
             Welcome! 🌟
           </h1>
@@ -238,6 +246,7 @@ export default function FamilySetup() {
               </button>
             )}
           </div>
+        </div>
         </div>
       </div>
     )
@@ -292,7 +301,9 @@ export default function FamilySetup() {
 
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
+        <div className="w-full max-w-md">
+        <h1 className="text-5xl font-bold text-center text-indigo-600 mb-4 drop-shadow-sm">Bloom</h1>
+        <div className="w-full bg-white rounded-2xl shadow-xl p-8">
           <button
             onClick={() => setMode(null)}
             className="text-gray-500 hover:text-gray-700 mb-4"
@@ -334,6 +345,7 @@ export default function FamilySetup() {
             Optional: Email will be used to send your family join code.
           </p>
         </div>
+        </div>
       </div>
     )
   }
@@ -341,7 +353,9 @@ export default function FamilySetup() {
   if (mode === 'join') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
+        <div className="w-full max-w-md">
+        <h1 className="text-5xl font-bold text-center text-indigo-600 mb-4 drop-shadow-sm">Bloom</h1>
+        <div className="w-full bg-white rounded-2xl shadow-xl p-8">
           <button
             onClick={() => setMode(null)}
             className="text-gray-500 hover:text-gray-700 mb-4"
@@ -414,6 +428,7 @@ export default function FamilySetup() {
           >
             {loading ? 'Joining...' : 'Join Family'}
           </button>
+        </div>
         </div>
       </div>
     )
