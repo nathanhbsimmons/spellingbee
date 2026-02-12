@@ -3,17 +3,18 @@ import {
   loadWordLists, createWordList, updateWordList, deleteWordList,
   loadSessions, getPin, setPin, verifyPin,
   loadProfiles, createProfile, deleteProfile,
-  getFamilyEmail, updateFamilyEmail, getEmailDeliveryStatus,
+  getFamilyEmails, addFamilyEmail, removeFamilyEmail,
 } from '../db'
 import { useFamily } from '../contexts/FamilyContext'
 
-export default function AdminPanel({ onSelectList, onClose, onBackToProfiles }) {
+export default function AdminPanel({ onSelectList, onClose, onBackToProfiles, initialView = 'lists' }) {
   const { familyId } = useFamily()
   const [lists, setLists] = useState([])
   const [sessions, setSessions] = useState([])
   const [profiles, setProfiles] = useState([])
   const [loading, setLoading] = useState(true)
-  const [view, setView] = useState('lists') // 'lists' | 'history' | 'create' | 'edit' | 'pin' | 'profiles' | 'family-settings' | 'pin-prompt'
+  const [view, setView] = useState(initialView) // 'lists' | 'settings-hub' | 'history' | 'create' | 'edit' | 'pin' | 'profiles' | 'family-settings' | 'pin-prompt'
+  const [previousView, setPreviousView] = useState(initialView === 'settings-hub' ? 'settings-hub' : 'lists')
   const [authenticated, setAuthenticated] = useState(false)
   const [pinInput, setPinInput] = useState('')
   const [pinError, setPinError] = useState('')
@@ -29,11 +30,14 @@ export default function AdminPanel({ onSelectList, onClose, onBackToProfiles }) 
   // Profile create state
   const [newProfileName, setNewProfileName] = useState('')
 
+  // AI sentence generation state
+  const [generatingSentences, setGeneratingSentences] = useState(false)
+  const [generateError, setGenerateError] = useState(null)
+
   // Email management state
-  const [familyEmail, setFamilyEmail] = useState('')
-  const [editingEmail, setEditingEmail] = useState(false)
+  const [familyEmails, setFamilyEmails] = useState([])
   const [newEmail, setNewEmail] = useState('')
-  const [emailSendStatus, setEmailSendStatus] = useState(null) // null | 'pending' | 'success' | 'error'
+  const [emailSendStatus, setEmailSendStatus] = useState({}) // { [email]: 'pending' | 'success' | 'error' }
 
   useEffect(() => {
     async function checkPin() {
@@ -65,17 +69,20 @@ export default function AdminPanel({ onSelectList, onClose, onBackToProfiles }) 
     loadData()
   }, [familyId, view, authenticated])
 
-  // Load family email when family-settings view is accessed
+  // Load family emails when family-settings view is accessed
   useEffect(() => {
     async function loadFamilySettings() {
       if (!familyId || view !== 'family-settings') return
-      const email = await getFamilyEmail(familyId)
-      if (email) {
-        setFamilyEmail(email)
-      }
+      const emails = await getFamilyEmails(familyId)
+      setFamilyEmails(emails)
     }
     loadFamilySettings()
   }, [familyId, view])
+
+  function navigateTo(targetView) {
+    setPreviousView(view)
+    setView(targetView)
+  }
 
   function requireAuth(action) {
     if (authenticated) {
@@ -84,7 +91,7 @@ export default function AdminPanel({ onSelectList, onClose, onBackToProfiles }) 
       setPendingAction(() => action)
       setPinInput('')
       setPinError('')
-      setView('pin-prompt')
+      navigateTo('pin-prompt')
     }
   }
 
@@ -153,7 +160,7 @@ export default function AdminPanel({ onSelectList, onClose, onBackToProfiles }) 
     e.preventDefault()
     await setPin(familyId, newPin)
     setNewPin('')
-    setView('lists')
+    setView(previousView)
   }
 
   function handleSentenceChange(word, sentence) {
@@ -166,6 +173,36 @@ export default function AdminPanel({ onSelectList, onClose, onBackToProfiles }) 
       }
       return next
     })
+  }
+
+  async function handleGenerateSentences() {
+    if (currentWords.length === 0) return
+    setGeneratingSentences(true)
+    setGenerateError(null)
+    try {
+      const { httpsCallable } = await import('firebase/functions')
+      const { functions } = await import('../firebase')
+
+      const generateFn = httpsCallable(functions, 'generateContextSentences')
+      const result = await generateFn({ words: currentWords })
+      const generated = result.data.sentences || {}
+
+      // Merge: only fill in words that don't already have a manually-entered sentence
+      setEditSentences((prev) => {
+        const merged = { ...prev }
+        for (const [word, sentence] of Object.entries(generated)) {
+          if (!merged[word] || !merged[word].trim()) {
+            merged[word] = sentence
+          }
+        }
+        return merged
+      })
+    } catch (error) {
+      console.error('Error generating sentences:', error)
+      setGenerateError('Failed to generate sentences. Please try again.')
+    } finally {
+      setGeneratingSentences(false)
+    }
   }
 
   async function handleCreateProfile(e) {
@@ -183,31 +220,45 @@ export default function AdminPanel({ onSelectList, onClose, onBackToProfiles }) 
     setProfiles(profilesData)
   }
 
-  async function handleUpdateEmail(e) {
+  async function handleAddEmail(e) {
     e.preventDefault()
     if (!newEmail.includes('@')) return
-    const success = await updateFamilyEmail(familyId, newEmail)
+    const success = await addFamilyEmail(familyId, newEmail.trim())
     if (success) {
-      setFamilyEmail(newEmail)
+      setFamilyEmails((prev) => [...prev, newEmail.trim()])
       setNewEmail('')
-      setEditingEmail(false)
     }
   }
 
-  async function handleResendJoinCode() {
-    setEmailSendStatus('pending')
+  async function handleRemoveEmail(email) {
+    const success = await removeFamilyEmail(familyId, email)
+    if (success) {
+      setFamilyEmails((prev) => prev.filter((e) => e !== email))
+    }
+  }
+
+  async function handleResendJoinCode(email) {
+    setEmailSendStatus((prev) => ({ ...prev, [email]: 'pending' }))
     try {
       const { httpsCallable } = await import('firebase/functions')
       const { functions } = await import('../firebase')
 
       const resendFunction = httpsCallable(functions, 'resendFamilyJoinCode')
-      await resendFunction({ familyId, email: familyEmail })
-      setEmailSendStatus('success')
-      setTimeout(() => setEmailSendStatus(null), 3000)
+      await resendFunction({ familyId, email })
+      setEmailSendStatus((prev) => ({ ...prev, [email]: 'success' }))
+      setTimeout(() => setEmailSendStatus((prev) => {
+        const next = { ...prev }
+        delete next[email]
+        return next
+      }), 3000)
     } catch (error) {
       console.error('Error resending email:', error)
-      setEmailSendStatus('error')
-      setTimeout(() => setEmailSendStatus(null), 3000)
+      setEmailSendStatus((prev) => ({ ...prev, [email]: 'error' }))
+      setTimeout(() => setEmailSendStatus((prev) => {
+        const next = { ...prev }
+        delete next[email]
+        return next
+      }), 3000)
     }
   }
 
@@ -242,7 +293,7 @@ export default function AdminPanel({ onSelectList, onClose, onBackToProfiles }) 
             Unlock
           </button>
         </form>
-        <button onClick={() => { setPendingAction(null); setView('lists') }} className="mt-3 w-full text-gray-400 text-sm hover:text-gray-600">
+        <button onClick={() => { setPendingAction(null); setView(previousView) }} className="mt-3 w-full text-gray-400 text-sm hover:text-gray-600">
           Cancel
         </button>
       </div>
@@ -276,9 +327,23 @@ export default function AdminPanel({ onSelectList, onClose, onBackToProfiles }) 
 
           {currentWords.length > 0 && (
             <div className="mb-4">
-              <p className="text-sm font-medium text-gray-700 mb-2">
-                Context sentences (optional)
-              </p>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-medium text-gray-700">
+                  Context sentences (optional)
+                </p>
+                <button
+                  type="button"
+                  onClick={handleGenerateSentences}
+                  disabled={generatingSentences}
+                  className="text-xs bg-purple-100 text-purple-700 px-3 py-1 rounded-lg font-medium
+                             hover:bg-purple-200 transition-colors disabled:opacity-50"
+                >
+                  {generatingSentences ? 'Generating...' : 'Generate with AI'}
+                </button>
+              </div>
+              {generateError && (
+                <p className="text-red-500 text-xs mb-2">{generateError}</p>
+              )}
               <div className="space-y-2" data-testid="sentence-fields">
                 {currentWords.map((word) => (
                   <div key={word} className="flex items-start gap-2">
@@ -338,7 +403,7 @@ export default function AdminPanel({ onSelectList, onClose, onBackToProfiles }) 
             Save PIN
           </button>
         </form>
-        <button onClick={() => setView('lists')} className="mt-3 w-full text-gray-400 text-sm hover:text-gray-600">
+        <button onClick={() => setView(previousView)} className="mt-3 w-full text-gray-400 text-sm hover:text-gray-600">
           Cancel
         </button>
       </div>
@@ -396,8 +461,8 @@ export default function AdminPanel({ onSelectList, onClose, onBackToProfiles }) 
             Go to Profile Selection
           </button>
         )}
-        <button onClick={() => setView('lists')} className="w-full text-gray-400 text-sm hover:text-gray-600">
-          Back to Lists
+        <button onClick={() => setView(previousView)} className="w-full text-gray-400 text-sm hover:text-gray-600">
+          Back
         </button>
       </div>
     )
@@ -426,8 +491,8 @@ export default function AdminPanel({ onSelectList, onClose, onBackToProfiles }) 
             ))}
           </ul>
         )}
-        <button onClick={() => setView('lists')} className="mt-4 w-full text-gray-400 text-sm hover:text-gray-600">
-          Back to Lists
+        <button onClick={() => setView(previousView)} className="mt-4 w-full text-gray-400 text-sm hover:text-gray-600">
+          Back
         </button>
       </div>
     )
@@ -436,71 +501,108 @@ export default function AdminPanel({ onSelectList, onClose, onBackToProfiles }) 
   if (view === 'family-settings') {
     return (
       <div className="bg-white rounded-2xl shadow-lg p-8 animate-[fade-in-up_0.3s_ease-out]">
-        <h2 className="text-2xl font-bold text-center text-indigo-600 mb-4">Family Settings</h2>
+        <h2 className="text-2xl font-bold text-center text-indigo-600 mb-4">Manage Emails</h2>
 
         <div className="mb-6">
-          <h3 className="text-lg font-semibold text-gray-700 mb-3">Email Address</h3>
-
-          {!editingEmail ? (
-            <div>
-              <p className="text-gray-600 bg-gray-50 rounded-lg px-4 py-3 mb-3">
-                {familyEmail || 'No email set'}
-              </p>
-              <button
-                onClick={() => {
-                  setEditingEmail(true)
-                  setNewEmail(familyEmail || '')
-                }}
-                className="w-full bg-indigo-600 text-white py-2 rounded-lg font-semibold hover:bg-indigo-700 mb-2"
-              >
-                Update Email
-              </button>
-              {familyEmail && (
-                <button
-                  onClick={handleResendJoinCode}
-                  disabled={emailSendStatus === 'pending'}
-                  className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50"
-                >
-                  {emailSendStatus === 'pending' ? 'Sending...' : 'Resend Join Code'}
-                </button>
-              )}
-              {emailSendStatus === 'success' && (
-                <p className="text-green-600 text-sm text-center mt-2">✓ Email sent successfully!</p>
-              )}
-              {emailSendStatus === 'error' && (
-                <p className="text-red-600 text-sm text-center mt-2">⚠ Failed to send email</p>
-              )}
-            </div>
+          {familyEmails.length === 0 ? (
+            <p className="text-center text-gray-400 mb-4">No emails added yet.</p>
           ) : (
-            <form onSubmit={handleUpdateEmail}>
-              <input
-                type="email"
-                value={newEmail}
-                onChange={(e) => setNewEmail(e.target.value)}
-                placeholder="new@email.com"
-                className="w-full border-2 border-indigo-200 rounded-lg px-3 py-2 mb-3 focus:outline-none focus:border-indigo-500"
-                autoFocus
-              />
-              <button
-                type="submit"
-                disabled={!newEmail.includes('@')}
-                className="w-full bg-green-600 text-white py-2 rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 mb-2"
-              >
-                Save Email
-              </button>
-              <button
-                type="button"
-                onClick={() => setEditingEmail(false)}
-                className="w-full text-gray-400 text-sm hover:text-gray-600"
-              >
-                Cancel
-              </button>
-            </form>
+            <ul className="space-y-2 mb-4">
+              {familyEmails.map((email) => (
+                <li key={email} className="bg-gray-50 rounded-lg px-4 py-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-gray-700 text-sm font-medium truncate">{email}</span>
+                    <button
+                      onClick={() => handleRemoveEmail(email)}
+                      disabled={familyEmails.length <= 1}
+                      className="text-xs text-gray-400 hover:text-red-500 disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleResendJoinCode(email)}
+                      disabled={emailSendStatus[email] === 'pending'}
+                      className="text-xs text-blue-600 hover:text-blue-800 disabled:opacity-50"
+                    >
+                      {emailSendStatus[email] === 'pending' ? 'Sending...' : 'Resend Join Code'}
+                    </button>
+                    {emailSendStatus[email] === 'success' && (
+                      <span className="text-xs text-green-600">Sent!</span>
+                    )}
+                    {emailSendStatus[email] === 'error' && (
+                      <span className="text-xs text-red-600">Failed</span>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
           )}
+
+          <form onSubmit={handleAddEmail} className="flex gap-2">
+            <input
+              type="email"
+              value={newEmail}
+              onChange={(e) => setNewEmail(e.target.value)}
+              placeholder="Add email address"
+              className="flex-1 border-2 border-indigo-200 rounded-lg px-3 py-2 text-sm
+                         focus:outline-none focus:border-indigo-500"
+            />
+            <button
+              type="submit"
+              disabled={!newEmail.includes('@')}
+              className="bg-indigo-600 text-white px-4 rounded-lg font-semibold text-sm
+                         hover:bg-indigo-700 disabled:opacity-40"
+            >
+              Add
+            </button>
+          </form>
         </div>
 
-        <button onClick={() => setView('lists')} className="w-full text-gray-400 text-sm hover:text-gray-600">
-          Back to Lists
+        <button onClick={() => setView(previousView)} className="w-full text-gray-400 text-sm hover:text-gray-600">
+          Back
+        </button>
+      </div>
+    )
+  }
+
+  if (view === 'settings-hub') {
+    return (
+      <div className="bg-white rounded-2xl shadow-lg p-8 animate-[fade-in-up_0.3s_ease-out]">
+        <h2 className="text-2xl font-bold text-center text-indigo-600 mb-4">Settings</h2>
+        <div className="space-y-2">
+          <button
+            onClick={() => navigateTo('history')}
+            className="w-full bg-gray-100 text-gray-600 py-3 rounded-xl text-sm font-medium
+                       hover:bg-gray-200 transition-colors"
+          >
+            History
+          </button>
+          <button
+            onClick={() => requireAuth(() => navigateTo('profiles'))}
+            className="w-full bg-gray-100 text-gray-600 py-3 rounded-xl text-sm font-medium
+                       hover:bg-gray-200 transition-colors"
+          >
+            Profiles
+          </button>
+          <button
+            onClick={() => requireAuth(() => navigateTo('pin'))}
+            className="w-full bg-gray-100 text-gray-600 py-3 rounded-xl text-sm font-medium
+                       hover:bg-gray-200 transition-colors"
+          >
+            Set PIN
+          </button>
+          <button
+            onClick={() => requireAuth(() => navigateTo('family-settings'))}
+            className="w-full bg-gray-100 text-gray-600 py-3 rounded-xl text-sm font-medium
+                       hover:bg-gray-200 transition-colors"
+          >
+            Manage Emails
+          </button>
+        </div>
+        <button onClick={onClose} className="mt-3 w-full text-gray-400 text-sm hover:text-gray-600">
+          Back
         </button>
       </div>
     )
@@ -541,45 +643,13 @@ export default function AdminPanel({ onSelectList, onClose, onBackToProfiles }) 
         </ul>
       )}
 
-      <div className="space-y-2">
-        <button
-          onClick={() => requireAuth(() => setView('create'))}
-          className="w-full bg-indigo-600 text-white py-3 rounded-xl font-semibold
-                     hover:bg-indigo-700 transition-colors"
-        >
-          Create New List
-        </button>
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            onClick={() => setView('history')}
-            className="bg-gray-100 text-gray-600 py-2 rounded-xl text-sm font-medium
-                       hover:bg-gray-200 transition-colors"
-          >
-            History
-          </button>
-          <button
-            onClick={() => requireAuth(() => setView('profiles'))}
-            className="bg-gray-100 text-gray-600 py-2 rounded-xl text-sm font-medium
-                       hover:bg-gray-200 transition-colors"
-          >
-            Profiles
-          </button>
-          <button
-            onClick={() => requireAuth(() => setView('pin'))}
-            className="bg-gray-100 text-gray-600 py-2 rounded-xl text-sm font-medium
-                       hover:bg-gray-200 transition-colors"
-          >
-            Set PIN
-          </button>
-          <button
-            onClick={() => requireAuth(() => setView('family-settings'))}
-            className="bg-gray-100 text-gray-600 py-2 rounded-xl text-sm font-medium
-                       hover:bg-gray-200 transition-colors"
-          >
-            Settings
-          </button>
-        </div>
-      </div>
+      <button
+        onClick={() => requireAuth(() => setView('create'))}
+        className="w-full bg-indigo-600 text-white py-3 rounded-xl font-semibold
+                   hover:bg-indigo-700 transition-colors"
+      >
+        Create New List
+      </button>
 
       <button onClick={onClose} className="mt-3 w-full text-gray-400 text-sm hover:text-gray-600">
         Back

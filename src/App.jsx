@@ -23,6 +23,7 @@ const SCREENS = {
   MODE: 'mode',
   PRACTICE: 'practice',
   COMPLETE: 'complete',
+  SETTINGS: 'settings',
 }
 
 function shuffleArray(arr) {
@@ -124,12 +125,21 @@ function AppContent() {
             onStart={handleStartPractice}
             onSelectList={handleSelectList}
             onManageLists={() => setScreen(SCREENS.ADMIN)}
+            onSettings={() => setScreen(SCREENS.SETTINGS)}
             onShowTutorial={() => setScreen(SCREENS.WELCOME)}
             onBackToProfiles={() => setScreen(SCREENS.PROFILE)}
           />
         )}
         {screen === SCREENS.ADMIN && (
           <AdminPanel
+            onSelectList={handleSelectList}
+            onClose={() => setScreen(SCREENS.SETUP)}
+            onBackToProfiles={() => setScreen(SCREENS.PROFILE)}
+          />
+        )}
+        {screen === SCREENS.SETTINGS && (
+          <AdminPanel
+            initialView="settings-hub"
             onSelectList={handleSelectList}
             onClose={() => setScreen(SCREENS.SETUP)}
             onBackToProfiles={() => setScreen(SCREENS.PROFILE)}

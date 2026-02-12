@@ -27,6 +27,20 @@ vi.mock('../db', () => ({
   verifyPin: vi.fn().mockResolvedValue(true),
   getStreak: vi.fn().mockResolvedValue(0),
   updateStreak: vi.fn().mockResolvedValue(1),
+  getFamilyEmails: vi.fn().mockResolvedValue([]),
+  addFamilyEmail: vi.fn().mockResolvedValue(true),
+  removeFamilyEmail: vi.fn().mockResolvedValue(true),
+}))
+
+// Mock firebase/functions (used by dynamic import in AdminPanel)
+const mockHttpsCallable = vi.fn()
+vi.mock('firebase/functions', () => ({
+  httpsCallable: mockHttpsCallable,
+}))
+
+// Mock ../firebase (used by dynamic import in AdminPanel)
+vi.mock('../firebase', () => ({
+  functions: {},
 }))
 
 afterEach(() => {

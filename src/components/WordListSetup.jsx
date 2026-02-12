@@ -3,7 +3,7 @@ import { loadWordLists, loadSessions } from '../db'
 import { getActiveProfile } from '../storage'
 import { useFamily } from '../contexts/FamilyContext'
 
-export default function WordListSetup({ onStart, onSelectList, onManageLists, onShowTutorial, onBackToProfiles }) {
+export default function WordListSetup({ onStart, onSelectList, onManageLists, onSettings, onShowTutorial, onBackToProfiles }) {
   const { familyId } = useFamily()
   const [view, setView] = useState('hub') // 'hub' | 'quick' | 'history' | 'session-detail'
   const [input, setInput] = useState('')
@@ -250,6 +250,16 @@ export default function WordListSetup({ onStart, onSelectList, onManageLists, on
           className="mt-3 w-full text-indigo-500 text-sm font-medium hover:text-indigo-700 transition-colors"
         >
           Manage Word Lists
+        </button>
+      )}
+
+      {onSettings && (
+        <button
+          type="button"
+          onClick={onSettings}
+          className="mt-1 w-full text-indigo-500 text-sm font-medium hover:text-indigo-700 transition-colors"
+        >
+          Settings
         </button>
       )}
 

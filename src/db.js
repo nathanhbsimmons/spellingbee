@@ -10,6 +10,8 @@ import {
   query,
   where,
   orderBy,
+  arrayUnion,
+  arrayRemove,
 } from 'firebase/firestore'
 import { db } from './firebase'
 
@@ -35,10 +37,12 @@ export async function createFamily(email = null) {
   const familyId = crypto.randomUUID()
   const joinCode = generateJoinCode()
 
+  const trimmedEmail = email ? email.trim() : null
   await setDoc(doc(db, 'families', familyId), {
     joinCode,
     pin: null,
-    email: email ? email.trim() : null,
+    email: trimmedEmail,
+    emails: trimmedEmail ? [trimmedEmail] : [],
     emailDeliveryStatus: null,
     emailLastSentAt: null,
     createdAt: new Date().toISOString(),
@@ -208,6 +212,52 @@ export async function getEmailDeliveryStatus(familyId) {
   } catch (error) {
     console.error('Error getting email delivery status:', error)
     return null
+  }
+}
+
+export async function getFamilyEmails(familyId) {
+  try {
+    const familyDoc = await getDoc(doc(db, 'families', familyId))
+    if (!familyDoc.exists()) {
+      return []
+    }
+    const data = familyDoc.data()
+    if (data.emails && Array.isArray(data.emails)) {
+      return data.emails
+    }
+    // Backward compat: fall back to single email field
+    if (data.email) {
+      return [data.email]
+    }
+    return []
+  } catch (error) {
+    console.error('Error getting family emails:', error)
+    return []
+  }
+}
+
+export async function addFamilyEmail(familyId, email) {
+  try {
+    const trimmed = email.trim()
+    await updateDoc(doc(db, 'families', familyId), {
+      emails: arrayUnion(trimmed),
+    })
+    return true
+  } catch (error) {
+    console.error('Error adding family email:', error)
+    return false
+  }
+}
+
+export async function removeFamilyEmail(familyId, email) {
+  try {
+    await updateDoc(doc(db, 'families', familyId), {
+      emails: arrayRemove(email),
+    })
+    return true
+  } catch (error) {
+    console.error('Error removing family email:', error)
+    return false
   }
 }
 
