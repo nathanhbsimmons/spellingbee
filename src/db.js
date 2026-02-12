@@ -31,13 +31,16 @@ function toDateString(date) {
 
 // --- Family Management ---
 
-export async function createFamily() {
+export async function createFamily(email = null) {
   const familyId = crypto.randomUUID()
   const joinCode = generateJoinCode()
 
   await setDoc(doc(db, 'families', familyId), {
     joinCode,
     pin: null,
+    email: email ? email.trim() : null,
+    emailDeliveryStatus: null,
+    emailLastSentAt: null,
     createdAt: new Date().toISOString(),
   })
 
@@ -161,6 +164,68 @@ export async function setPin(familyId, pin) {
 export async function verifyPin(familyId, input) {
   const stored = await getPin(familyId)
   return !stored || stored === input
+}
+
+// --- Email Management ---
+
+export async function getFamilyEmail(familyId) {
+  try {
+    const familyDoc = await getDoc(doc(db, 'families', familyId))
+    if (!familyDoc.exists()) {
+      return null
+    }
+    return familyDoc.data().email
+  } catch (error) {
+    console.error('Error getting family email:', error)
+    return null
+  }
+}
+
+export async function updateFamilyEmail(familyId, email) {
+  try {
+    await updateDoc(doc(db, 'families', familyId), {
+      email: email.trim(),
+    })
+    return true
+  } catch (error) {
+    console.error('Error updating family email:', error)
+    return false
+  }
+}
+
+export async function getEmailDeliveryStatus(familyId) {
+  try {
+    const familyDoc = await getDoc(doc(db, 'families', familyId))
+    if (!familyDoc.exists()) {
+      return null
+    }
+    const data = familyDoc.data()
+    return {
+      email: data.email,
+      status: data.emailDeliveryStatus,
+      lastSentAt: data.emailLastSentAt,
+    }
+  } catch (error) {
+    console.error('Error getting email delivery status:', error)
+    return null
+  }
+}
+
+export async function updateEmailDeliveryStatus(familyId, status, error = null) {
+  try {
+    const updateData = {
+      emailDeliveryStatus: status,
+      emailLastSentAt: new Date().toISOString(),
+    }
+    if (error) {
+      updateData.emailError = error
+    }
+    await updateDoc(doc(db, 'families', familyId), updateData)
+    return true
+  } catch (error) {
+    console.error('Error updating email delivery status:', error)
+    return false
+  }
 }
 
 // --- Profiles ---
