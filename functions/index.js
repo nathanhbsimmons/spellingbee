@@ -1,4 +1,5 @@
-import functions from 'firebase-functions'
+import { onDocumentCreated } from 'firebase-functions/v2/firestore'
+import { onCall } from 'firebase-functions/v2/https'
 import admin from 'firebase-admin'
 import { sendJoinCodeEmail } from './utils/emailService.js'
 
@@ -6,12 +7,14 @@ admin.initializeApp()
 const db = admin.firestore()
 
 // Trigger: Send join code email when a family is created with an email
-export const sendFamilyJoinCode = functions
-  .region('us-central1')
-  .firestore.document('families/{familyId}')
-  .onCreate(async (snap, context) => {
-    const { familyId } = context.params
-    const familyData = snap.data()
+export const sendFamilyJoinCode = onDocumentCreated(
+  {
+    document: 'families/{familyId}',
+    region: 'us-central1',
+  },
+  async (event) => {
+    const familyId = event.params.familyId
+    const familyData = event.data.data()
 
     // Skip if no email provided
     if (!familyData.email) {
@@ -56,26 +59,29 @@ export const sendFamilyJoinCode = functions
         console.error(`Failed to update family ${familyId} with error status:`, updateError)
       }
     }
-  })
+  }
+)
 
 // Callable function: Resend join code email to current or new email address
-export const resendFamilyJoinCode = functions
-  .region('us-central1')
-  .https.onCall(async (data, context) => {
-    const { familyId, email } = data
+export const resendFamilyJoinCode = onCall(
+  {
+    region: 'us-central1',
+  },
+  async (request) => {
+    const { familyId, email } = request.data
 
     // Validate input
     if (!familyId) {
-      throw new functions.https.HttpsError('invalid-argument', 'familyId is required')
+      throw new Error('familyId is required')
     }
 
     if (!email) {
-      throw new functions.https.HttpsError('invalid-argument', 'email is required')
+      throw new Error('email is required')
     }
 
     // Basic email validation
     if (!email.includes('@')) {
-      throw new functions.https.HttpsError('invalid-argument', 'Invalid email address')
+      throw new Error('Invalid email address')
     }
 
     try {
@@ -83,7 +89,7 @@ export const resendFamilyJoinCode = functions
       const familyDoc = await db.collection('families').doc(familyId).get()
 
       if (!familyDoc.exists) {
-        throw new functions.https.HttpsError('not-found', 'Family not found')
+        throw new Error('Family not found')
       }
 
       const familyData = familyDoc.data()
@@ -116,13 +122,7 @@ export const resendFamilyJoinCode = functions
       }
     } catch (error) {
       console.error(`Error resending email for family ${familyId}:`, error)
-
-      // If it's already an HttpsError, rethrow it
-      if (error instanceof functions.https.HttpsError) {
-        throw error
-      }
-
-      // Otherwise, convert to internal error
-      throw new functions.https.HttpsError('internal', error.message || 'Failed to send email')
+      throw error
     }
-  })
+  }
+)
