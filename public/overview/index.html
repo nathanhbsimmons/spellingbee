@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spelling Word Collector</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: #1a1a2e;
+      line-height: 1.7;
+      background: #f8f7ff;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+      color: white;
+      padding: 80px 40px 60px;
+      text-align: center;
+    }
+
+    .hero h1 {
+      font-size: 2.8em;
+      font-weight: 700;
+      margin-bottom: 12px;
+      letter-spacing: -0.5px;
+    }
+
+    .hero .tagline {
+      font-size: 1.3em;
+      font-weight: 500;
+      opacity: 0.95;
+      margin-bottom: 30px;
+    }
+
+    .hero .intro {
+      max-width: 680px;
+      margin: 0 auto;
+      font-size: 1.05em;
+      line-height: 1.8;
+      opacity: 0.9;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 0 40px;
+    }
+
+    section {
+      padding: 50px 0;
+    }
+
+    section + section {
+      border-top: 1px solid #e8e5f5;
+    }
+
+    h2 {
+      font-size: 1.9em;
+      font-weight: 700;
+      color: #6c5ce7;
+      margin-bottom: 30px;
+      letter-spacing: -0.3px;
+    }
+
+    h3 {
+      font-size: 1.25em;
+      font-weight: 600;
+      color: #2d2b55;
+      margin-bottom: 12px;
+      margin-top: 35px;
+    }
+
+    h3:first-child { margin-top: 0; }
+
+    p {
+      margin-bottom: 16px;
+      font-size: 1.05em;
+      color: #333;
+    }
+
+    .step {
+      display: flex;
+      gap: 40px;
+      align-items: center;
+      margin-bottom: 50px;
+    }
+
+    .step:nth-child(even) {
+      flex-direction: row-reverse;
+    }
+
+    .step-text {
+      flex: 1;
+    }
+
+    .step-text .step-number {
+      display: inline-block;
+      background: #6c5ce7;
+      color: white;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 32px;
+      font-weight: 700;
+      font-size: 0.9em;
+      margin-bottom: 8px;
+    }
+
+    .step-text h3 {
+      margin-top: 8px;
+      font-size: 1.35em;
+    }
+
+    .step-image {
+      flex-shrink: 0;
+    }
+
+    .step-image img {
+      width: 240px;
+      border-radius: 20px;
+      box-shadow: 0 8px 30px rgba(108, 92, 231, 0.15);
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .feature-card {
+      background: white;
+      border-radius: 14px;
+      padding: 24px;
+      box-shadow: 0 2px 12px rgba(108, 92, 231, 0.08);
+    }
+
+    .feature-card .feature-title {
+      font-weight: 600;
+      color: #2d2b55;
+      margin-bottom: 6px;
+      font-size: 1.05em;
+    }
+
+    .feature-card .feature-desc {
+      font-size: 0.95em;
+      color: #666;
+      margin-bottom: 0;
+      line-height: 1.5;
+    }
+
+    .tech-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 2px 12px rgba(108, 92, 231, 0.08);
+    }
+
+    .tech-table th {
+      background: #6c5ce7;
+      color: white;
+      padding: 14px 20px;
+      text-align: left;
+      font-weight: 600;
+    }
+
+    .tech-table td {
+      padding: 12px 20px;
+      border-bottom: 1px solid #f0eef8;
+      font-size: 0.95em;
+    }
+
+    .tech-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .why-section {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 4px 20px rgba(108, 92, 231, 0.1);
+      margin-top: 10px;
+    }
+
+    .why-section p {
+      font-size: 1.1em;
+      color: #444;
+    }
+
+    .why-section p:last-child {
+      margin-bottom: 0;
+      font-weight: 500;
+      color: #6c5ce7;
+    }
+
+    .closing {
+      text-align: center;
+      padding: 50px 40px;
+      background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+      color: white;
+    }
+
+    .closing p {
+      color: white;
+      font-size: 1.2em;
+      opacity: 0.95;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .closing .url {
+      margin-top: 20px;
+      font-size: 1.1em;
+      font-weight: 600;
+      opacity: 1;
+    }
+
+    @media (max-width: 700px) {
+      .hero { padding: 50px 24px 40px; }
+      .hero h1 { font-size: 2em; }
+      .container { padding: 0 24px; }
+      .step { flex-direction: column !important; gap: 20px; }
+      .step-image img { width: 200px; }
+      .features-grid { grid-template-columns: 1fr; }
+    }
+
+    @media print {
+      body { background: white; }
+      .hero { padding: 40px 20px 30px; }
+      section { padding: 30px 0; }
+      .step-image img { width: 200px; box-shadow: none; border: 1px solid #ddd; }
+      .closing { background: #6c5ce7; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="hero">
+    <h1>Spelling Word Collector</h1>
+    <p class="tagline">A spelling practice app for kids who'd rather do literally anything else.</p>
+    <p class="intro">
+      You know the drill. It's Tuesday night. The spelling test is Thursday. Your kid is staring at a list of 20 words like it's a sentencing document. You've tried flashcards (boring), writing each word five times (cruel and unusual), and that one app that buzzes angrily every time they get a word wrong (tears were involved).
+    </p>
+  </div>
+
+  <div class="container">
+
+    <section>
+      <h2>How It Works</h2>
+
+      <div class="step">
+        <div class="step-text">
+          <span class="step-number">1</span>
+          <h3>Set Up Your Word List</h3>
+          <p>Parents enter the week's spelling words. You can optionally add context sentences manually, or let <strong>Claude AI generate them</strong> for you &mdash; because you've got enough to do already.</p>
+        </div>
+        <div class="step-image">
+          <img src="screenshots/03-create-word-list.png" alt="Creating a word list with AI-generated context sentences" />
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-text">
+          <span class="step-number">2</span>
+          <h3>Pick a Theme</h3>
+          <p>Your kid picks how they want to collect words today. Garden? Space? Treasure chest? Aquarium? It's their call. This is the one decision in their evening they actually get to make.</p>
+        </div>
+        <div class="step-image">
+          <img src="screenshots/04-theme-selection.png" alt="Theme selection with Garden, Space, Treasure, and Aquarium" />
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-text">
+          <span class="step-number">3</span>
+          <h3>Practice (the Stress-Free Kind)</h3>
+          <p>The app reads each word aloud, your kid types what they hear, and hits "Next Word." That's it. No judgment, no scoring, no red ink. Every word gets collected &mdash; right or wrong. The garden fills up with flowers, stars appear in the sky, the treasure chest fills with gems.</p>
+        </div>
+        <div class="step-image">
+          <img src="screenshots/06-garden-collection.png" alt="Practice mode with garden theme" />
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-text">
+          <span class="step-number">4</span>
+          <h3>Review Together</h3>
+          <p>After collecting all the words, you sit down together for review. Words they got right are already "bloomed" (green checkmark, everyone's happy). Words that need work show a "Fix" button &mdash; they retype it, the flower blooms, and everyone moves on with their lives.</p>
+        </div>
+        <div class="step-image">
+          <img src="screenshots/07-review-mode.png" alt="Review mode showing correct and incorrect words" />
+        </div>
+      </div>
+
+      <p style="text-align: center; font-size: 1.15em; color: #6c5ce7; font-weight: 500; margin-top: 10px;">
+        No tears. No fights. Just a garden full of flowers and a kid who actually wants to practice again tomorrow.
+      </p>
+    </section>
+
+    <section>
+      <h2>Features</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <p class="feature-title">Collection Themes</p>
+          <p class="feature-desc">Garden, Space, Treasure, and Aquarium &mdash; because variety is the spice of spelling.</p>
+        </div>
+        <div class="feature-card">
+          <p class="feature-title">Text-to-Speech</p>
+          <p class="feature-desc">Words are read aloud so kids can practice independently without needing a parent nearby.</p>
+        </div>
+        <div class="feature-card">
+          <p class="feature-title">AI Context Sentences</p>
+          <p class="feature-desc">Claude AI writes age-appropriate example sentences for each word so you don't have to.</p>
+        </div>
+        <div class="feature-card">
+          <p class="feature-title">Multiple Practice Modes</p>
+          <p class="feature-desc">Standard listen-and-type plus a letter scramble mode for extra variety.</p>
+        </div>
+        <div class="feature-card">
+          <p class="feature-title">Family Sync</p>
+          <p class="feature-desc">Data syncs across devices. Practice on the iPad, review on the laptop.</p>
+        </div>
+        <div class="feature-card">
+          <p class="feature-title">Multiple Profiles</p>
+          <p class="feature-desc">Got more than one kid? Each gets their own profile and practice history.</p>
+        </div>
+        <div class="feature-card">
+          <p class="feature-title">Practice Streaks</p>
+          <p class="feature-desc">Track consecutive practice days. Gentle motivation, not guilt.</p>
+        </div>
+        <div class="feature-card">
+          <p class="feature-title">PIN-Protected Admin</p>
+          <p class="feature-desc">Keep the settings safe from tiny curious fingers.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Tech Stack</h2>
+      <table class="tech-table">
+        <thead>
+          <tr><th>Layer</th><th>Technology</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Frontend</td><td>React 19 + Vite</td></tr>
+          <tr><td>Styling</td><td>Tailwind CSS 4</td></tr>
+          <tr><td>Database</td><td>Firebase Firestore</td></tr>
+          <tr><td>Hosting</td><td>Firebase Hosting</td></tr>
+          <tr><td>Backend</td><td>Firebase Cloud Functions (Node 22)</td></tr>
+          <tr><td>AI</td><td>Anthropic Claude Haiku</td></tr>
+          <tr><td>Testing</td><td>Vitest + React Testing Library</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Why This Exists</h2>
+      <div class="why-section">
+        <p>My daughter was in tears over spelling practice. The existing apps all did the same thing: show a word, make the kid type it, then flash a big red X when they got it wrong. Great for building resilience, maybe. Terrible for building a love of learning.</p>
+        <p>So I built something different. The core insight is simple: <strong>separate the practice from the evaluation.</strong> Let kids engage with the words freely during practice, then review accuracy together afterward in a supportive context.</p>
+        <p>It turns out that when you remove the fear of being wrong, kids are a lot more willing to practice.</p>
+      </div>
+    </section>
+
+  </div>
+
+  <div class="closing">
+    <p>If your kid's relationship with spelling homework looks anything like mine did, give this a try.</p>
+    <p class="url">spelling-word-collector.web.app</p>
+  </div>
+
+</body>
+</html>
