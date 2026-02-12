@@ -3,7 +3,7 @@
   "description": "Cloud Functions for Spelling Word Collector",
   "type": "module",
   "engines": {
-    "node": "20"
+    "node": "22"
   },
   "main": "index.js",
   "scripts": {
@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "firebase-admin": "^13.0.0",
-    "firebase-functions": "^6.0.0",
+    "firebase-functions": "^7.0.5",
     "nodemailer": "^6.9.0"
   }
 }
