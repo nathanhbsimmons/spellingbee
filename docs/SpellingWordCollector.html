@@ -17,32 +17,70 @@
     }
 
     .hero {
-      background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
-      color: white;
-      padding: 80px 40px 60px;
+      background: linear-gradient(160deg, #e8e0ff 0%, #d4c8ff 25%, #b8a9f7 50%, #a29bfe 75%, #8b7cf6 100%);
+      color: #2d2b55;
+      padding: 60px 40px 50px;
       text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '🌸 🚀 💎 🐠';
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 1.6em;
+      letter-spacing: 12px;
+      opacity: 0.5;
+      filter: grayscale(20%);
+    }
+
+    .hero-card {
+      background: white;
+      border-radius: 28px;
+      padding: 44px 48px 40px;
+      max-width: 660px;
+      margin: 40px auto 0;
+      box-shadow: 0 12px 40px rgba(108, 92, 231, 0.18), 0 2px 8px rgba(108, 92, 231, 0.08);
+      position: relative;
     }
 
     .hero h1 {
-      font-size: 2.8em;
+      font-size: 2.6em;
       font-weight: 700;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       letter-spacing: -0.5px;
+      color: #6c5ce7;
     }
 
     .hero .tagline {
-      font-size: 1.3em;
-      font-weight: 500;
-      opacity: 0.95;
-      margin-bottom: 30px;
+      font-size: 1.2em;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 24px;
+      font-style: italic;
     }
 
     .hero .intro {
-      max-width: 680px;
+      max-width: 580px;
       margin: 0 auto;
-      font-size: 1.05em;
+      font-size: 1.02em;
       line-height: 1.8;
-      opacity: 0.9;
+      color: #555;
+    }
+
+    .hero .no-anxiety {
+      display: inline-block;
+      margin-top: 24px;
+      background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+      color: white;
+      padding: 12px 28px;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 1.05em;
+      letter-spacing: 0.2px;
     }
 
     .container {
@@ -223,8 +261,10 @@
     }
 
     @media (max-width: 700px) {
-      .hero { padding: 50px 24px 40px; }
-      .hero h1 { font-size: 2em; }
+      .hero { padding: 40px 16px 30px; }
+      .hero::before { font-size: 1.2em; top: 12px; }
+      .hero-card { padding: 30px 24px 28px; margin-top: 30px; border-radius: 20px; }
+      .hero h1 { font-size: 1.9em; }
       .container { padding: 0 24px; }
       .step { flex-direction: column !important; gap: 20px; }
       .step-image img { width: 200px; }
@@ -243,11 +283,14 @@
 <body>
 
   <div class="hero">
-    <h1>Spelling Word Collector</h1>
-    <p class="tagline">A spelling practice app for kids who'd rather do literally anything else.</p>
-    <p class="intro">
-      You know the drill. It's Tuesday night. The spelling test is Thursday. Your kid is staring at a list of 20 words like it's a sentencing document. You've tried flashcards (boring), writing each word five times (cruel and unusual), and that one app that buzzes angrily every time they get a word wrong (tears were involved).
-    </p>
+    <div class="hero-card">
+      <h1>Spelling Word Collector</h1>
+      <p class="tagline">A spelling practice app for kids who'd rather do literally anything else.</p>
+      <p class="intro">
+        You know the drill. It's Tuesday night. The spelling test is Thursday. Your kid is staring at a list of 20 words like it's a sentencing document. You've tried flashcards (boring), writing each word five times (cruel and unusual), and that one app that buzzes angrily every time they get a word wrong (tears were involved).
+      </p>
+      <span class="no-anxiety">No red Xs. No buzzers. No tears.</span>
+    </div>
   </div>
 
   <div class="container">
