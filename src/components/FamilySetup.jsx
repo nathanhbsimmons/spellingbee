@@ -13,6 +13,8 @@ export default function FamilySetup() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [showMigrationPrompt, setShowMigrationPrompt] = useState(false)
+  const [parentEmail, setParentEmail] = useState('')
+  const [emailDeliveryStatus, setEmailDeliveryStatus] = useState(null) // null | 'pending' | 'success' | 'error'
 
   useEffect(() => {
     // Check if we should show migration prompt
@@ -40,13 +42,15 @@ export default function FamilySetup() {
     loadExistingFamilyCode()
   }, [existingFamilyId, createdCode])
 
-  const handleCreate = async () => {
+  const handleCreate = async (email = null) => {
     setLoading(true)
     setError('')
+    setEmailDeliveryStatus(null)
     try {
-      const { familyId, joinCode } = await createFamily()
+      const { familyId, joinCode } = await createFamily(email)
       setCreatedCode(joinCode)
       setCreatedFamilyId(familyId)
+      setParentEmail(email || '')
 
       // If there's data to migrate and user hasn't migrated yet, show migration prompt
       if (showMigrationPrompt && hasLocalStorageData() && !hasMigrated()) {
@@ -240,6 +244,20 @@ export default function FamilySetup() {
               </p>
             </div>
 
+            {parentEmail && (
+              <div className="bg-blue-50 border border-blue-300 rounded-lg px-4 py-3 mb-6">
+                <p className="text-sm text-blue-900">
+                  <strong>Email:</strong> {parentEmail}
+                </p>
+                {emailDeliveryStatus === 'success' && (
+                  <p className="text-sm text-green-600 mt-2">✓ Join code sent to email</p>
+                )}
+                {emailDeliveryStatus === 'error' && (
+                  <p className="text-sm text-red-600 mt-2">⚠ Email delivery failed</p>
+                )}
+              </div>
+            )}
+
             <p className="text-sm text-gray-500 text-center mb-6">
               Write this code down! You'll need it to connect other devices.
             </p>
@@ -269,7 +287,7 @@ export default function FamilySetup() {
             Create Family
           </h1>
           <p className="text-center text-gray-600 mb-8">
-            Create a new family to start syncing your spelling practice across devices.
+            Enter your email to receive the family join code.
           </p>
 
           {error && (
@@ -278,13 +296,26 @@ export default function FamilySetup() {
             </div>
           )}
 
-          <button
-            onClick={handleCreate}
+          <input
+            type="email"
+            value={parentEmail}
+            onChange={(e) => setParentEmail(e.target.value)}
+            placeholder="your@email.com"
+            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg mb-4 focus:border-purple-500 focus:outline-none"
             disabled={loading}
+          />
+
+          <button
+            onClick={() => handleCreate(parentEmail)}
+            disabled={loading || !parentEmail.includes('@')}
             className="w-full bg-purple-600 text-white py-4 px-6 rounded-xl font-semibold hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Creating...' : 'Create Family'}
           </button>
+
+          <p className="text-xs text-gray-500 text-center mt-4">
+            Optional: Email will be used to send your family join code.
+          </p>
         </div>
       </div>
     )
