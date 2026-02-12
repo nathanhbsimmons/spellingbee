@@ -1,17 +1,20 @@
 import { useState, useEffect } from 'react'
-import { createFamily, joinFamily } from '../db'
+import { createFamily, joinFamily, getFamily } from '../db'
 import { useFamily } from '../contexts/FamilyContext'
 import { hasLocalStorageData, hasMigrated, migrateLocalStorageToFirestore } from '../migrate'
 
 export default function FamilySetup() {
-  const { setFamilyId } = useFamily()
-  const [mode, setMode] = useState(null) // null | 'create' | 'join' | 'migrate'
+  const { familyId: existingFamilyId, setFamilyId } = useFamily()
+  const [mode, setMode] = useState(null) // null | 'create' | 'join' | 'migrate' | 'view-code'
   const [joinCode, setJoinCode] = useState('')
   const [createdCode, setCreatedCode] = useState('')
   const [createdFamilyId, setCreatedFamilyId] = useState('')
+  const [retrievedCode, setRetrievedCode] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [showMigrationPrompt, setShowMigrationPrompt] = useState(false)
+  const [parentEmail, setParentEmail] = useState('')
+  const [emailDeliveryStatus, setEmailDeliveryStatus] = useState(null) // null | 'pending' | 'success' | 'error'
 
   useEffect(() => {
     // Check if we should show migration prompt
@@ -20,13 +23,34 @@ export default function FamilySetup() {
     }
   }, [])
 
-  const handleCreate = async () => {
+  // Load existing family's join code if they already have a familyId
+  useEffect(() => {
+    const loadExistingFamilyCode = async () => {
+      if (existingFamilyId && !createdCode) {
+        try {
+          const family = await getFamily(existingFamilyId)
+          if (family && family.joinCode) {
+            setRetrievedCode(family.joinCode)
+            setMode('view-code')
+          }
+        } catch (err) {
+          console.error('Failed to load family join code:', err)
+        }
+      }
+    }
+
+    loadExistingFamilyCode()
+  }, [existingFamilyId, createdCode])
+
+  const handleCreate = async (email = null) => {
     setLoading(true)
     setError('')
+    setEmailDeliveryStatus(null)
     try {
-      const { familyId, joinCode } = await createFamily()
+      const { familyId, joinCode } = await createFamily(email)
       setCreatedCode(joinCode)
       setCreatedFamilyId(familyId)
+      setParentEmail(email || '')
 
       // If there's data to migrate and user hasn't migrated yet, show migration prompt
       if (showMigrationPrompt && hasLocalStorageData() && !hasMigrated()) {
@@ -85,6 +109,38 @@ export default function FamilySetup() {
     } finally {
       setLoading(false)
     }
+  }
+
+  if (mode === 'view-code') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
+          <h1 className="text-3xl font-bold text-center mb-4 text-purple-900">
+            Family Join Code 🔗
+          </h1>
+          <p className="text-center text-gray-600 mb-6">
+            Share this code with other devices to sync your spelling practice:
+          </p>
+
+          <div className="bg-purple-50 border-2 border-purple-300 rounded-xl p-6 mb-6">
+            <p className="text-center text-4xl font-bold text-purple-900 tracking-widest">
+              {retrievedCode}
+            </p>
+          </div>
+
+          <p className="text-sm text-gray-500 text-center mb-6">
+            Give this code to anyone who wants to join your family.
+          </p>
+
+          <button
+            onClick={() => setMode(null)}
+            className="w-full bg-purple-600 text-white py-4 px-6 rounded-xl font-semibold hover:bg-purple-700 transition-colors"
+          >
+            Continue to App
+          </button>
+        </div>
+      </div>
+    )
   }
 
   if (mode === 'migrate') {
@@ -155,6 +211,15 @@ export default function FamilySetup() {
             >
               Join Existing Family
             </button>
+
+            {retrievedCode && (
+              <button
+                onClick={() => setMode('view-code')}
+                className="w-full bg-green-600 text-white py-4 px-6 rounded-xl font-semibold hover:bg-green-700 transition-colors"
+              >
+                View Family Join Code
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -178,6 +243,20 @@ export default function FamilySetup() {
                 {createdCode}
               </p>
             </div>
+
+            {parentEmail && (
+              <div className="bg-blue-50 border border-blue-300 rounded-lg px-4 py-3 mb-6">
+                <p className="text-sm text-blue-900">
+                  <strong>Email:</strong> {parentEmail}
+                </p>
+                {emailDeliveryStatus === 'success' && (
+                  <p className="text-sm text-green-600 mt-2">✓ Join code sent to email</p>
+                )}
+                {emailDeliveryStatus === 'error' && (
+                  <p className="text-sm text-red-600 mt-2">⚠ Email delivery failed</p>
+                )}
+              </div>
+            )}
 
             <p className="text-sm text-gray-500 text-center mb-6">
               Write this code down! You'll need it to connect other devices.
@@ -208,7 +287,7 @@ export default function FamilySetup() {
             Create Family
           </h1>
           <p className="text-center text-gray-600 mb-8">
-            Create a new family to start syncing your spelling practice across devices.
+            Enter your email to receive the family join code.
           </p>
 
           {error && (
@@ -217,13 +296,26 @@ export default function FamilySetup() {
             </div>
           )}
 
-          <button
-            onClick={handleCreate}
+          <input
+            type="email"
+            value={parentEmail}
+            onChange={(e) => setParentEmail(e.target.value)}
+            placeholder="your@email.com"
+            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg mb-4 focus:border-purple-500 focus:outline-none"
             disabled={loading}
+          />
+
+          <button
+            onClick={() => handleCreate(parentEmail)}
+            disabled={loading || !parentEmail.includes('@')}
             className="w-full bg-purple-600 text-white py-4 px-6 rounded-xl font-semibold hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Creating...' : 'Create Family'}
           </button>
+
+          <p className="text-xs text-gray-500 text-center mt-4">
+            Optional: Email will be used to send your family join code.
+          </p>
         </div>
       </div>
     )
