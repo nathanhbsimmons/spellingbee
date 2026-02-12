@@ -4,7 +4,7 @@ import { dismissWelcome } from '../storage'
 const STEPS = [
   {
     icon: '👋',
-    title: 'Welcome to Spelling Word Collector!',
+    title: 'Welcome to Bloom!',
     description:
       'A fun, low-pressure way to practice spelling words. No grades, no stress — just collecting words and growing together.',
   },

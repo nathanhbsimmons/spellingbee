@@ -10,7 +10,7 @@ beforeEach(() => {
 describe('Welcome', () => {
   it('shows the first step on mount', () => {
     render(<Welcome onDone={() => {}} />)
-    expect(screen.getByText(/welcome to spelling word collector/i)).toBeInTheDocument()
+    expect(screen.getByText(/welcome to bloom/i)).toBeInTheDocument()
     expect(screen.getByText('Next')).toBeInTheDocument()
   })
 
@@ -46,7 +46,7 @@ describe('Welcome', () => {
     render(<Welcome onDone={() => {}} />)
     await user.click(screen.getByText('Next'))
     await user.click(screen.getByText('Back'))
-    expect(screen.getByText(/welcome to spelling word collector/i)).toBeInTheDocument()
+    expect(screen.getByText(/welcome to bloom/i)).toBeInTheDocument()
   })
 
   it('shows Get Started on the last step', async () => {

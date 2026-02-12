@@ -1,10 +1,12 @@
-# Spelling Word Collector
+# Bloom
+
+### Spelling Word Collector
 
 **A spelling practice app for kids who'd rather do literally anything else.**
 
 You know the drill. It's Tuesday night. The spelling test is Thursday. Your kid is staring at a list of 20 words like it's a sentencing document. You've tried flashcards (boring), writing each word five times (cruel and unusual), and that one app that buzzes angrily every time they get a word wrong (tears were involved).
 
-Spelling Word Collector takes a different approach: **no real-time grading, no red Xs, no wrong-answer buzzers.** Kids "collect" words during practice — every attempt gets a flower in their garden, a star in their constellation, a gem in their treasure chest. Then you sit down together afterward to review. It's spelling practice that doesn't feel like a pop quiz.
+Bloom takes a different approach: **no real-time grading, no red Xs, no wrong-answer buzzers.** Kids "collect" words during practice — every attempt gets a flower in their garden, a star in their constellation, a gem in their treasure chest. Then you sit down together afterward to review. It's spelling practice that doesn't feel like a pop quiz.
 
 ---
 

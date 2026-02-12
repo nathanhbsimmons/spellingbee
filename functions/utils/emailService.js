@@ -131,12 +131,12 @@ function generateEmailTemplate(joinCode, appUrl = null) {
       <body>
         <div class="container">
           <div class="header">
-            <h1>🌟 Spelling Word Collector</h1>
+            <h1>🌸 Bloom</h1>
             <p style="color: #666; margin: 10px 0;">Your Family Join Code</p>
           </div>
 
           <p style="font-size: 16px; color: #333;">
-            Welcome to Spelling Word Collector! To sync your spelling practice across devices, use this code:
+            Welcome to Bloom! To sync your spelling practice across devices, use this code:
           </p>
 
           <div class="code-box">
@@ -147,7 +147,7 @@ function generateEmailTemplate(joinCode, appUrl = null) {
           <div class="instructions">
             <h2>How to use this code:</h2>
             <ol>
-              <li>Open Spelling Word Collector on another device</li>
+              <li>Open Bloom on another device</li>
               <li>Select "Join Existing Family"</li>
               <li>Enter the code above: <strong>${joinCode}</strong></li>
               <li>Your devices will now sync automatically!</li>
@@ -160,12 +160,12 @@ function generateEmailTemplate(joinCode, appUrl = null) {
 
           ${baseUrl ? `
           <div class="app-link">
-            <a href="${baseUrl}">Open Spelling Word Collector</a>
+            <a href="${baseUrl}">Open Bloom</a>
           </div>
           ` : ''}
 
           <div class="footer">
-            <p>Spelling Word Collector - Making spelling practice anxiety-free</p>
+            <p>Bloom - Making spelling practice anxiety-free</p>
             <p>No real-time grading, just joyful learning and family collaboration</p>
           </div>
         </div>
@@ -186,7 +186,7 @@ export async function sendJoinCodeEmail({ email, joinCode, familyId, appUrl = nu
     const info = await transporter.sendMail({
       from: process.env.GMAIL_EMAIL,
       to: email,
-      subject: `Your Spelling Word Collector Join Code: ${joinCode}`,
+      subject: `Your Bloom Join Code: ${joinCode}`,
       html: htmlContent,
     })
 

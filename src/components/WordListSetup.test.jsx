@@ -17,7 +17,6 @@ describe('WordListSetup', () => {
     loadSessions.mockResolvedValue([])
     renderWithFamily(<WordListSetup onStart={() => {}} onSelectList={() => {}} />)
     await waitFor(() => {
-      expect(screen.getByText('Spelling Word Collector')).toBeInTheDocument()
       expect(screen.getByText(/choose how you'd like to practice/i)).toBeInTheDocument()
     })
   })
@@ -146,7 +145,7 @@ describe('WordListSetup', () => {
     await user.click(screen.getByRole('button', { name: /quick practice/i }))
     expect(screen.getByLabelText(/spelling words/i)).toBeInTheDocument()
     await user.click(screen.getByText('Back'))
-    expect(screen.getByText('Spelling Word Collector')).toBeInTheDocument()
+    expect(screen.getByText(/choose how you'd like to practice/i)).toBeInTheDocument()
   })
 
   // History view tests
@@ -198,7 +197,7 @@ describe('WordListSetup', () => {
     await waitFor(() => screen.getByRole('button', { name: /view history/i }))
     await user.click(screen.getByRole('button', { name: /view history/i }))
     await user.click(screen.getByText('Back'))
-    expect(screen.getByText('Spelling Word Collector')).toBeInTheDocument()
+    expect(screen.getByText(/choose how you'd like to practice/i)).toBeInTheDocument()
   })
 
   // Manage and tutorial tests

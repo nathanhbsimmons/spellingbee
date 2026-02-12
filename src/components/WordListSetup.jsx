@@ -194,9 +194,6 @@ export default function WordListSetup({ onStart, onSelectList, onManageLists, on
   // Hub view (default)
   return (
     <div className="bg-white rounded-2xl shadow-lg p-8 animate-[fade-in-up_0.3s_ease-out]">
-      <h1 className="text-3xl font-bold text-center text-indigo-600 mb-2">
-        Spelling Word Collector
-      </h1>
       <p className="text-center text-gray-500 mb-6">
         Choose how you'd like to practice
       </p>
