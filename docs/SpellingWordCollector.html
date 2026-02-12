@@ -16,6 +16,55 @@
       background: #f8f7ff;
     }
 
+    .sticky-nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(108, 92, 231, 0.1);
+      padding: 10px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .sticky-nav .nav-brand {
+      font-weight: 700;
+      font-size: 1.05em;
+      color: #6c5ce7;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sticky-nav .nav-brand span {
+      font-size: 1.2em;
+    }
+
+    .cta-button {
+      display: inline-block;
+      background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+      color: white;
+      padding: 10px 24px;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 0.95em;
+      text-decoration: none;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      box-shadow: 0 2px 8px rgba(108, 92, 231, 0.25);
+    }
+
+    .cta-button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(108, 92, 231, 0.35);
+    }
+
+    .cta-button:active {
+      transform: translateY(0);
+    }
+
     .hero {
       background: linear-gradient(160deg, #e8e0ff 0%, #d4c8ff 25%, #b8a9f7 50%, #a29bfe 75%, #8b7cf6 100%);
       color: #2d2b55;
@@ -253,14 +302,22 @@
       margin: 0 auto;
     }
 
-    .closing .url {
-      margin-top: 20px;
+    .closing .cta-button {
+      margin-top: 24px;
+      padding: 14px 36px;
       font-size: 1.1em;
-      font-weight: 600;
-      opacity: 1;
+      background: white;
+      color: #6c5ce7;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    .closing .cta-button:hover {
+      box-shadow: 0 6px 22px rgba(0, 0, 0, 0.2);
     }
 
     @media (max-width: 700px) {
+      .sticky-nav .nav-brand-text { display: none; }
+      .cta-button { padding: 8px 18px; font-size: 0.9em; }
       .hero { padding: 40px 16px 30px; }
       .hero::before { font-size: 1.2em; top: 12px; }
       .hero-card { padding: 30px 24px 28px; margin-top: 30px; border-radius: 20px; }
@@ -272,15 +329,25 @@
     }
 
     @media print {
+      .sticky-nav { display: none; }
       body { background: white; }
       .hero { padding: 40px 20px 30px; }
       section { padding: 30px 0; }
       .step-image img { width: 200px; box-shadow: none; border: 1px solid #ddd; }
       .closing { background: #6c5ce7; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .closing .cta-button { display: none; }
     }
   </style>
 </head>
 <body>
+
+  <nav class="sticky-nav">
+    <div class="nav-brand">
+      <span>🌸</span>
+      <span class="nav-brand-text">Spelling Word Collector</span>
+    </div>
+    <a href="https://spelling-word-collector.web.app" class="cta-button">Try It Free</a>
+  </nav>
 
   <div class="hero">
     <div class="hero-card">
@@ -416,7 +483,7 @@
 
   <div class="closing">
     <p>If your kid's relationship with spelling homework looks anything like mine did, give this a try.</p>
-    <p class="url">spelling-word-collector.web.app</p>
+    <a href="https://spelling-word-collector.web.app" class="cta-button">Start Collecting Words</a>
   </div>
 
 </body>
