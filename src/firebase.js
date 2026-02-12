@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase/app'
 import { getFirestore } from 'firebase/firestore'
+import { getFunctions } from 'firebase/functions'
 
 // Firebase configuration
 // IMPORTANT: Replace these with your actual Firebase project credentials
@@ -19,4 +20,7 @@ const app = initializeApp(firebaseConfig)
 // Initialize Firestore
 const db = getFirestore(app)
 
-export { app, db }
+// Initialize Cloud Functions
+const functions = getFunctions(app, 'us-central1')
+
+export { app, db, functions }

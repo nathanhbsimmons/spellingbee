@@ -197,12 +197,10 @@ export default function AdminPanel({ onSelectList, onClose, onBackToProfiles }) 
   async function handleResendJoinCode() {
     setEmailSendStatus('pending')
     try {
-      // Import and call the resend function
-      const { resendJoinCodeEmail } = await import('firebase/functions')
-      const { getFirestoreFunctions } = await import('../firebase')
       const { httpsCallable } = await import('firebase/functions')
+      const { functions } = await import('../firebase')
 
-      const resendFunction = httpsCallable(getFirestoreFunctions(), 'resendFamilyJoinCode')
+      const resendFunction = httpsCallable(functions, 'resendFamilyJoinCode')
       await resendFunction({ familyId, email: familyEmail })
       setEmailSendStatus('success')
       setTimeout(() => setEmailSendStatus(null), 3000)
