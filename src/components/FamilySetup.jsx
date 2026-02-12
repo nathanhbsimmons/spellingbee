@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { createFamily, joinFamily, getFamily } from '../db'
 import { useFamily } from '../contexts/FamilyContext'
 import { hasLocalStorageData, hasMigrated, migrateLocalStorageToFirestore } from '../migrate'
+import { getFunctions, httpsCallable } from 'firebase/functions'
 
 export default function FamilySetup() {
   const { familyId: existingFamilyId, setFamilyId } = useFamily()
@@ -15,6 +16,8 @@ export default function FamilySetup() {
   const [showMigrationPrompt, setShowMigrationPrompt] = useState(false)
   const [parentEmail, setParentEmail] = useState('')
   const [emailDeliveryStatus, setEmailDeliveryStatus] = useState(null) // null | 'pending' | 'success' | 'error'
+  const [joinEmail, setJoinEmail] = useState('')
+  const [joinEmailStatus, setJoinEmailStatus] = useState(null) // null | 'sending' | 'sent' | 'error'
 
   useEffect(() => {
     // Check if we should show migration prompt
@@ -86,6 +89,20 @@ export default function FamilySetup() {
 
   const handleSkipMigration = () => {
     setFamilyId(createdFamilyId)
+  }
+
+  const handleRequestJoinCode = async () => {
+    if (!joinEmail.includes('@')) return
+    setJoinEmailStatus('sending')
+    try {
+      const functions = getFunctions(undefined, 'us-central1')
+      const requestJoinCode = httpsCallable(functions, 'requestJoinCode')
+      await requestJoinCode({ email: joinEmail })
+      setJoinEmailStatus('sent')
+    } catch (err) {
+      console.error('Failed to request join code:', err)
+      setJoinEmailStatus('error')
+    }
   }
 
   const handleJoin = async () => {
@@ -335,8 +352,8 @@ export default function FamilySetup() {
           <h1 className="text-3xl font-bold text-center mb-4 text-purple-900">
             Join Family
           </h1>
-          <p className="text-center text-gray-600 mb-8">
-            Enter the 6-character code from your other device.
+          <p className="text-center text-gray-600 mb-6">
+            Enter the 6-character code, or request it via email.
           </p>
 
           {error && (
@@ -344,6 +361,39 @@ export default function FamilySetup() {
               {error}
             </div>
           )}
+
+          <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-6">
+            <p className="text-sm font-medium text-gray-700 mb-3">
+              Don't have your code? Get it by email:
+            </p>
+            <div className="flex gap-2">
+              <input
+                type="email"
+                value={joinEmail}
+                onChange={(e) => setJoinEmail(e.target.value)}
+                placeholder="your@email.com"
+                className="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg text-sm focus:border-blue-500 focus:outline-none"
+                disabled={joinEmailStatus === 'sending'}
+              />
+              <button
+                onClick={handleRequestJoinCode}
+                disabled={joinEmailStatus === 'sending' || !joinEmail.includes('@')}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+              >
+                {joinEmailStatus === 'sending' ? 'Sending...' : 'Send Code'}
+              </button>
+            </div>
+            {joinEmailStatus === 'sent' && (
+              <p className="text-sm text-green-600 mt-2">
+                If a family exists with that email, a join code has been sent.
+              </p>
+            )}
+            {joinEmailStatus === 'error' && (
+              <p className="text-sm text-red-600 mt-2">
+                Something went wrong. Please try again.
+              </p>
+            )}
+          </div>
 
           <input
             type="text"

@@ -62,6 +62,62 @@ export const sendFamilyJoinCode = onDocumentCreated(
   }
 )
 
+// Callable function: Request join code by email (for join flow on a different device)
+export const requestJoinCode = onCall(
+  {
+    region: 'us-central1',
+  },
+  async (request) => {
+    const { email } = request.data
+
+    if (!email || !email.includes('@')) {
+      throw new Error('A valid email address is required')
+    }
+
+    const genericMessage = 'If a family exists with that email, a join code has been sent.'
+
+    try {
+      const snapshot = await db
+        .collection('families')
+        .where('email', '==', email)
+        .limit(1)
+        .get()
+
+      if (snapshot.empty) {
+        console.log(`No family found for email ${email}. Returning generic message.`)
+        return { success: true, message: genericMessage }
+      }
+
+      const familyDoc = snapshot.docs[0]
+      const familyData = familyDoc.data()
+
+      console.log(`Sending requested join code for family ${familyDoc.id} to ${email}`)
+
+      await sendJoinCodeEmail({
+        email: email,
+        joinCode: familyData.joinCode,
+        familyId: familyDoc.id,
+      })
+
+      await db
+        .collection('families')
+        .doc(familyDoc.id)
+        .update({
+          emailDeliveryStatus: 'success',
+          emailLastSentAt: admin.firestore.FieldValue.serverTimestamp(),
+        })
+
+      console.log(`Join code request email sent for family ${familyDoc.id}`)
+
+      return { success: true, message: genericMessage }
+    } catch (error) {
+      console.error(`Error processing join code request for ${email}:`, error)
+      // Return generic message even on error to avoid leaking info
+      return { success: true, message: genericMessage }
+    }
+  }
+)
+
 // Callable function: Resend join code email to current or new email address
 export const resendFamilyJoinCode = onCall(
   {
