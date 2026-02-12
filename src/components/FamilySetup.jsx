@@ -363,15 +363,18 @@ export default function FamilySetup() {
           )}
 
           <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-6">
-            <p className="text-sm font-medium text-gray-700 mb-3">
-              Don't have your code? Get it by email:
+            <p className="text-sm font-medium text-gray-700 mb-2">
+              Don't have your code?
+            </p>
+            <p className="text-xs text-gray-500 mb-3">
+              Enter the email that was used to create your family and we'll send the join code there.
             </p>
             <div className="flex gap-2">
               <input
                 type="email"
                 value={joinEmail}
                 onChange={(e) => setJoinEmail(e.target.value)}
-                placeholder="your@email.com"
+                placeholder="family creator's email"
                 className="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg text-sm focus:border-blue-500 focus:outline-none"
                 disabled={joinEmailStatus === 'sending'}
               />
@@ -385,7 +388,7 @@ export default function FamilySetup() {
             </div>
             {joinEmailStatus === 'sent' && (
               <p className="text-sm text-green-600 mt-2">
-                If a family exists with that email, a join code has been sent.
+                If a family exists with that email, the join code has been sent to that address.
               </p>
             )}
             {joinEmailStatus === 'error' && (
