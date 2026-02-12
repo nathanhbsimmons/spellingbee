@@ -3,6 +3,7 @@ import {
   loadWordLists, createWordList, updateWordList, deleteWordList,
   loadSessions, getPin, setPin, verifyPin,
   loadProfiles, createProfile, deleteProfile,
+  getFamilyEmail, updateFamilyEmail, getEmailDeliveryStatus,
 } from '../db'
 import { useFamily } from '../contexts/FamilyContext'
 
@@ -12,7 +13,7 @@ export default function AdminPanel({ onSelectList, onClose, onBackToProfiles }) 
   const [sessions, setSessions] = useState([])
   const [profiles, setProfiles] = useState([])
   const [loading, setLoading] = useState(true)
-  const [view, setView] = useState('lists') // 'lists' | 'history' | 'create' | 'edit' | 'pin' | 'profiles' | 'pin-prompt'
+  const [view, setView] = useState('lists') // 'lists' | 'history' | 'create' | 'edit' | 'pin' | 'profiles' | 'family-settings' | 'pin-prompt'
   const [authenticated, setAuthenticated] = useState(false)
   const [pinInput, setPinInput] = useState('')
   const [pinError, setPinError] = useState('')
@@ -27,6 +28,12 @@ export default function AdminPanel({ onSelectList, onClose, onBackToProfiles }) 
 
   // Profile create state
   const [newProfileName, setNewProfileName] = useState('')
+
+  // Email management state
+  const [familyEmail, setFamilyEmail] = useState('')
+  const [editingEmail, setEditingEmail] = useState(false)
+  const [newEmail, setNewEmail] = useState('')
+  const [emailSendStatus, setEmailSendStatus] = useState(null) // null | 'pending' | 'success' | 'error'
 
   useEffect(() => {
     async function checkPin() {
@@ -57,6 +64,18 @@ export default function AdminPanel({ onSelectList, onClose, onBackToProfiles }) 
     }
     loadData()
   }, [familyId, view, authenticated])
+
+  // Load family email when family-settings view is accessed
+  useEffect(() => {
+    async function loadFamilySettings() {
+      if (!familyId || view !== 'family-settings') return
+      const email = await getFamilyEmail(familyId)
+      if (email) {
+        setFamilyEmail(email)
+      }
+    }
+    loadFamilySettings()
+  }, [familyId, view])
 
   function requireAuth(action) {
     if (authenticated) {
@@ -162,6 +181,36 @@ export default function AdminPanel({ onSelectList, onClose, onBackToProfiles }) 
     await deleteProfile(familyId, id)
     const profilesData = await loadProfiles(familyId)
     setProfiles(profilesData)
+  }
+
+  async function handleUpdateEmail(e) {
+    e.preventDefault()
+    if (!newEmail.includes('@')) return
+    const success = await updateFamilyEmail(familyId, newEmail)
+    if (success) {
+      setFamilyEmail(newEmail)
+      setNewEmail('')
+      setEditingEmail(false)
+    }
+  }
+
+  async function handleResendJoinCode() {
+    setEmailSendStatus('pending')
+    try {
+      // Import and call the resend function
+      const { resendJoinCodeEmail } = await import('firebase/functions')
+      const { getFirestoreFunctions } = await import('../firebase')
+      const { httpsCallable } = await import('firebase/functions')
+
+      const resendFunction = httpsCallable(getFirestoreFunctions(), 'resendFamilyJoinCode')
+      await resendFunction({ familyId, email: familyEmail })
+      setEmailSendStatus('success')
+      setTimeout(() => setEmailSendStatus(null), 3000)
+    } catch (error) {
+      console.error('Error resending email:', error)
+      setEmailSendStatus('error')
+      setTimeout(() => setEmailSendStatus(null), 3000)
+    }
   }
 
   // Get current words from the edit textarea for sentence fields
@@ -386,6 +435,79 @@ export default function AdminPanel({ onSelectList, onClose, onBackToProfiles }) 
     )
   }
 
+  if (view === 'family-settings') {
+    return (
+      <div className="bg-white rounded-2xl shadow-lg p-8 animate-[fade-in-up_0.3s_ease-out]">
+        <h2 className="text-2xl font-bold text-center text-indigo-600 mb-4">Family Settings</h2>
+
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold text-gray-700 mb-3">Email Address</h3>
+
+          {!editingEmail ? (
+            <div>
+              <p className="text-gray-600 bg-gray-50 rounded-lg px-4 py-3 mb-3">
+                {familyEmail || 'No email set'}
+              </p>
+              <button
+                onClick={() => {
+                  setEditingEmail(true)
+                  setNewEmail(familyEmail || '')
+                }}
+                className="w-full bg-indigo-600 text-white py-2 rounded-lg font-semibold hover:bg-indigo-700 mb-2"
+              >
+                Update Email
+              </button>
+              {familyEmail && (
+                <button
+                  onClick={handleResendJoinCode}
+                  disabled={emailSendStatus === 'pending'}
+                  className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {emailSendStatus === 'pending' ? 'Sending...' : 'Resend Join Code'}
+                </button>
+              )}
+              {emailSendStatus === 'success' && (
+                <p className="text-green-600 text-sm text-center mt-2">✓ Email sent successfully!</p>
+              )}
+              {emailSendStatus === 'error' && (
+                <p className="text-red-600 text-sm text-center mt-2">⚠ Failed to send email</p>
+              )}
+            </div>
+          ) : (
+            <form onSubmit={handleUpdateEmail}>
+              <input
+                type="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                placeholder="new@email.com"
+                className="w-full border-2 border-indigo-200 rounded-lg px-3 py-2 mb-3 focus:outline-none focus:border-indigo-500"
+                autoFocus
+              />
+              <button
+                type="submit"
+                disabled={!newEmail.includes('@')}
+                className="w-full bg-green-600 text-white py-2 rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 mb-2"
+              >
+                Save Email
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditingEmail(false)}
+                className="w-full text-gray-400 text-sm hover:text-gray-600"
+              >
+                Cancel
+              </button>
+            </form>
+          )}
+        </div>
+
+        <button onClick={() => setView('lists')} className="w-full text-gray-400 text-sm hover:text-gray-600">
+          Back to Lists
+        </button>
+      </div>
+    )
+  }
+
   // Default: lists view (always accessible without PIN)
   return (
     <div className="bg-white rounded-2xl shadow-lg p-8 animate-[fade-in-up_0.3s_ease-out]">
@@ -429,27 +551,34 @@ export default function AdminPanel({ onSelectList, onClose, onBackToProfiles }) 
         >
           Create New List
         </button>
-        <div className="flex gap-2">
+        <div className="grid grid-cols-2 gap-2">
           <button
             onClick={() => setView('history')}
-            className="flex-1 bg-gray-100 text-gray-600 py-2 rounded-xl text-sm font-medium
+            className="bg-gray-100 text-gray-600 py-2 rounded-xl text-sm font-medium
                        hover:bg-gray-200 transition-colors"
           >
             History
           </button>
           <button
             onClick={() => requireAuth(() => setView('profiles'))}
-            className="flex-1 bg-gray-100 text-gray-600 py-2 rounded-xl text-sm font-medium
+            className="bg-gray-100 text-gray-600 py-2 rounded-xl text-sm font-medium
                        hover:bg-gray-200 transition-colors"
           >
             Profiles
           </button>
           <button
             onClick={() => requireAuth(() => setView('pin'))}
-            className="flex-1 bg-gray-100 text-gray-600 py-2 rounded-xl text-sm font-medium
+            className="bg-gray-100 text-gray-600 py-2 rounded-xl text-sm font-medium
                        hover:bg-gray-200 transition-colors"
           >
             Set PIN
+          </button>
+          <button
+            onClick={() => requireAuth(() => setView('family-settings'))}
+            className="bg-gray-100 text-gray-600 py-2 rounded-xl text-sm font-medium
+                       hover:bg-gray-200 transition-colors"
+          >
+            Settings
           </button>
         </div>
       </div>
