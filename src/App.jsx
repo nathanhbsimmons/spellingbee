@@ -46,6 +46,7 @@ function AppContent() {
   const [theme, setTheme] = useState(DEFAULT_THEME)
   const [practiceMode, setPracticeMode] = useState('standard')
   const [streak, setStreak] = useState(0)
+  const [skippedWords, setSkippedWords] = useState([])
 
   // If no familyId, show family setup
   if (!familyId) {
@@ -65,6 +66,7 @@ function AppContent() {
     setSentences({})
     setListName('')
     setCollectedWords([])
+    setSkippedWords([])
     setScreen(SCREENS.THEME)
   }
 
@@ -73,6 +75,7 @@ function AppContent() {
     setSentences(list.sentences || {})
     setListName(list.name)
     setCollectedWords([])
+    setSkippedWords([])
     setScreen(SCREENS.THEME)
   }
 
@@ -89,6 +92,12 @@ function AppContent() {
 
   function handleCollectWord(typed) {
     setCollectedWords((prev) => [...prev, typed])
+  }
+
+  function handleSkipWord() {
+    const index = collectedWords.length
+    setWords((prev) => [...prev.slice(0, index), ...prev.slice(index + 1), prev[index]])
+    setSkippedWords((prev) => [...prev, words[index]])
   }
 
   async function handlePracticeComplete(finalCollected) {
@@ -162,6 +171,8 @@ function AppContent() {
             onCollect={handleCollectWord}
             onComplete={handlePracticeComplete}
             onBack={handleStartOver}
+            onSkip={handleSkipWord}
+            skippedWords={skippedWords}
             ThemeVisualization={ThemeComponent}
             mode={practiceMode}
           />
