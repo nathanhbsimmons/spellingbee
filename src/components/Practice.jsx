@@ -16,13 +16,30 @@ function scrambleWord(word) {
   return result
 }
 
+function maskSentence(sentence, word) {
+  const parts = word.toLowerCase().split(/[^a-z']+/).filter(Boolean)
+  return sentence.replace(/[A-Za-z']+/g, (token) => {
+    const lower = token.toLowerCase()
+    const leaks = parts.some((part) => {
+      if (lower === part) return true
+      if (part.length <= 3) return false
+      return lower.startsWith(part.slice(0, Math.max(3, part.length - 2)))
+    })
+    return leaks ? '____' : token
+  })
+}
+
+function sentenceForSpeech(sentence, word) {
+  return sentence.replace(/_{2,}/g, word)
+}
+
 export default function Practice({ words, sentences = {}, collectedWords, onCollect, onComplete, onBack, ThemeVisualization, mode = 'standard' }) {
   const currentIndex = collectedWords.length
   const isLastWord = currentIndex === words.length - 1
   const [typed, setTyped] = useState('')
-  const [autoPlay, setAutoPlay] = useState(true)
+  const [autoPlay, setAutoPlay] = useState(mode !== 'scramble')
   const inputRef = useRef(null)
-  const { speak, speaking, supported } = useSpeech()
+  const { speak, speaking, supported, blocked, voices, selectedVoice, setSelectedVoice } = useSpeech()
 
   // Memoize scrambled words so they don't change on re-render
   const scrambledWords = useMemo(() => {
@@ -32,7 +49,7 @@ export default function Practice({ words, sentences = {}, collectedWords, onColl
 
   useEffect(() => {
     inputRef.current?.focus()
-    if (autoPlay && supported) {
+    if (currentIndex === 0 && autoPlay && supported) {
       speak(words[currentIndex])
     }
   }, [currentIndex]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -46,6 +63,8 @@ export default function Practice({ words, sentences = {}, collectedWords, onColl
 
     if (isLastWord) {
       onComplete([...collectedWords, trimmed])
+    } else if (autoPlay && supported && !blocked) {
+      speak(words[currentIndex + 1])
     }
   }
 
@@ -61,9 +80,11 @@ export default function Practice({ words, sentences = {}, collectedWords, onColl
 
   const currentWord = words[currentIndex]
   const currentSentence = sentences[currentWord]
+  const maskedSentence = currentSentence && maskSentence(currentSentence, currentWord)
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-8 animate-[fade-in-up_0.3s_ease-out]">
+    <div className="grid gap-6 lg:grid-cols-2 lg:items-start animate-[fade-in-up_0.3s_ease-out]">
+    <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8">
       <div className="text-center mb-6">
         <span className="text-sm font-medium text-gray-400 uppercase tracking-wide">
           Word {currentIndex + 1} of {words.length}
@@ -96,22 +117,34 @@ export default function Practice({ words, sentences = {}, collectedWords, onColl
 
       {currentSentence && (
         <p className="text-center text-gray-400 text-sm mb-4 italic" data-testid="context-sentence">
-          "{currentSentence}"
+          "{maskedSentence}"
         </p>
       )}
 
       {supported ? (
-        <div className="flex items-center gap-3 mb-6">
+        <div className="mb-6">
+        <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => speak(currentWord)}
             disabled={speaking}
-            className="flex-1 flex items-center justify-center gap-2 bg-emerald-500
+            className={`flex-1 flex items-center justify-center gap-2 bg-emerald-500
                        text-white font-semibold py-3 rounded-xl hover:bg-emerald-600
-                       transition-colors disabled:opacity-60"
+                       transition-colors disabled:opacity-60 ${blocked ? 'animate-pulse' : ''}`}
           >
             <span className="text-xl">{speaking ? '🔊' : '🔈'}</span>
             {speaking ? 'Playing...' : 'Play Word'}
+          </button>
+          <button
+            type="button"
+            onClick={() => speak(currentWord, { rate: 0.5 })}
+            disabled={speaking}
+            className="flex items-center justify-center gap-1 bg-white border-2 border-emerald-500
+                       text-emerald-700 font-semibold py-3 px-4 rounded-xl hover:bg-emerald-50
+                       transition-colors disabled:opacity-60"
+          >
+            <span className="text-lg">🐢</span>
+            Slow
           </button>
           <label className="flex items-center gap-2 text-sm text-gray-500 cursor-pointer select-none">
             <input
@@ -122,6 +155,41 @@ export default function Practice({ words, sentences = {}, collectedWords, onColl
             />
             Auto-play
           </label>
+        </div>
+        {currentSentence && (
+          <button
+            type="button"
+            onClick={() => speak(`${currentWord}. ${sentenceForSpeech(currentSentence, currentWord)}`)}
+            disabled={speaking}
+            className="mt-3 w-full flex items-center justify-center gap-2 bg-white border-2 border-emerald-500
+                       text-emerald-700 font-semibold py-2 rounded-xl hover:bg-emerald-50
+                       transition-colors disabled:opacity-60"
+          >
+            <span className="text-lg">💬</span>
+            Play in a Sentence
+          </button>
+        )}
+        {blocked && (
+          <p className="mt-3 text-center text-amber-600 text-sm">
+            Tap "Play Word" to turn on sound.
+          </p>
+        )}
+        {voices.length > 1 && (
+          <label className="mt-3 flex items-center gap-2 text-sm text-gray-500">
+            Voice
+            <select
+              value={selectedVoice?.name || ''}
+              onChange={(e) => setSelectedVoice(e.target.value)}
+              className="flex-1 min-w-0 border border-gray-200 rounded-lg p-1.5 text-gray-700 bg-white"
+            >
+              {voices.map((v) => (
+                <option key={v.name} value={v.name}>
+                  {v.name} ({v.lang})
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         </div>
       ) : (
         <p className="text-center text-amber-600 text-sm mb-6">
@@ -155,13 +223,6 @@ export default function Practice({ words, sentences = {}, collectedWords, onColl
 
       <EncouragingMessage currentIndex={currentIndex} />
 
-      {ThemeVisualization && (
-        <ThemeVisualization
-          collectedWords={collectedWords}
-          latestIndex={collectedWords.length - 1}
-        />
-      )}
-
       {onBack && (
         <button
           onClick={onBack}
@@ -170,6 +231,16 @@ export default function Practice({ words, sentences = {}, collectedWords, onColl
           Quit Practice
         </button>
       )}
+    </div>
+
+    {ThemeVisualization && (
+      <div className="lg:sticky lg:top-4">
+        <ThemeVisualization
+          collectedWords={collectedWords}
+          latestIndex={collectedWords.length - 1}
+        />
+      </div>
+    )}
     </div>
   )
 }

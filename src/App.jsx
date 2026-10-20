@@ -9,6 +9,7 @@ import ProfileSelector from './components/ProfileSelector'
 import ModeSelector from './components/ModeSelector'
 import FamilySetup from './components/FamilySetup'
 import { THEMES, DEFAULT_THEME } from './components/themes'
+import { unlockSpeech } from './hooks/useSpeech'
 import { saveSession, getStreak } from './db'
 import { getActiveProfile, hasSeenWelcome } from './storage'
 import { useFamily, FamilyProvider } from './contexts/FamilyContext'
@@ -81,6 +82,7 @@ function AppContent() {
   }
 
   function handleModeSelected(mode) {
+    unlockSpeech()
     setPracticeMode(mode)
     setScreen(SCREENS.PRACTICE)
   }
@@ -113,7 +115,7 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-lg">
+      <div className={`w-full ${screen === SCREENS.PRACTICE || screen === SCREENS.COMPLETE ? 'max-w-5xl' : 'max-w-lg'}`}>
         <h1 className="text-5xl font-bold text-center text-indigo-600 mb-4 drop-shadow-sm">Bloom</h1>
         {screen === SCREENS.WELCOME && (
           <Welcome onDone={handleWelcomeDone} />
