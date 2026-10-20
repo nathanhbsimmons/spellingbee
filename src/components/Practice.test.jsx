@@ -153,14 +153,17 @@ describe('Practice', () => {
     expect(screen.getByRole('button', { name: /play word/i })).toBeInTheDocument()
   })
 
-  it('auto-plays audio in scramble mode', async () => {
+  it('does not auto-play audio in scramble mode', () => {
     mockSpeak.mockClear()
     render(<Practice {...defaultProps} mode="scramble" />)
-    await waitFor(() => {
-      expect(mockSpeak).toHaveBeenCalled()
-    })
-    const utterance = mockSpeak.mock.calls[0][0]
-    expect(utterance.text).toBe('apple')
+    expect(mockSpeak).not.toHaveBeenCalled()
+    expect(screen.getByLabelText(/auto-play/i)).not.toBeChecked()
+  })
+
+  it('shows the sentence button in scramble mode', () => {
+    const sentences = { apple: 'The ___ fell from the tree.' }
+    render(<Practice {...defaultProps} mode="scramble" sentences={sentences} />)
+    expect(screen.getByRole('button', { name: /play in a sentence/i })).toBeInTheDocument()
   })
 
   it('still allows typing and collecting in scramble mode', async () => {
@@ -183,6 +186,52 @@ describe('Practice', () => {
   it('does not show context sentence when not provided', () => {
     render(<Practice {...defaultProps} />)
     expect(screen.queryByTestId('context-sentence')).not.toBeInTheDocument()
+  })
+
+  it('masks the word and its variants in the sentence', () => {
+    const sentences = { apple: 'An Apple a day. Apples are red. The applesauce and the apple pie.' }
+    render(<Practice {...defaultProps} sentences={sentences} />)
+    const shown = screen.getByTestId('context-sentence').textContent
+    expect(shown).not.toMatch(/apple/i)
+    expect(shown).toBe('"An ____ a day. ____ are red. The ____ and the ____ pie."')
+  })
+
+  it('does not mask unrelated words that merely contain the word', () => {
+    const sentences = { cat: 'The catalog has a cat and a category.' }
+    render(<Practice {...defaultProps} words={['cat', 'dog']} sentences={sentences} />)
+    expect(screen.getByTestId('context-sentence').textContent).toBe(
+      '"The catalog has a ____ and a category."',
+    )
+  })
+
+  it('speaks the word then the sentence with the blank filled in', async () => {
+    const user = userEvent.setup()
+    const sentences = { apple: 'The ___ fell from the tree.' }
+    render(<Practice {...defaultProps} sentences={sentences} />)
+    mockSpeak.mockClear()
+    await user.click(screen.getByRole('button', { name: /play in a sentence/i }))
+    expect(mockSpeak.mock.calls[0][0].text).toBe('apple. The apple fell from the tree.')
+    expect(screen.getByTestId('context-sentence').textContent).toContain('___')
+  })
+
+  it('plays the word slowly with the Slow button', async () => {
+    const user = userEvent.setup()
+    render(<Practice {...defaultProps} />)
+    mockSpeak.mockClear()
+    await user.click(screen.getByRole('button', { name: /slow/i }))
+    const utterance = mockSpeak.mock.calls[0][0]
+    expect(utterance.text).toBe('apple')
+    expect(utterance.rate).toBe(0.5)
+  })
+
+  it('speaks the next word from the Next click, not from an effect', async () => {
+    const user = userEvent.setup()
+    render(<Practice {...defaultProps} />)
+    await user.type(screen.getByPlaceholderText(/type the word/i), 'appel')
+    mockSpeak.mockClear()
+    await user.click(screen.getByRole('button', { name: /next word/i }))
+    expect(mockSpeak).toHaveBeenCalledTimes(1)
+    expect(mockSpeak.mock.calls[0][0].text).toBe('banana')
   })
 
   // Back/quit button tests
