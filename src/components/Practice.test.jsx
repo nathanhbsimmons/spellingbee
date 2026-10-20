@@ -234,6 +234,60 @@ describe('Practice', () => {
     expect(mockSpeak.mock.calls[0][0].text).toBe('banana')
   })
 
+  it('shows Skip for now and calls onSkip', async () => {
+    const user = userEvent.setup()
+    const onSkip = vi.fn()
+    render(<Practice {...defaultProps} onSkip={onSkip} />)
+    await user.click(screen.getByRole('button', { name: /skip for now/i }))
+    expect(onSkip).toHaveBeenCalled()
+  })
+
+  it('hides Skip for now on the last word', () => {
+    render(<Practice {...defaultProps} collectedWords={['appel', 'banan']} onSkip={() => {}} />)
+    expect(screen.queryByRole('button', { name: /skip for now/i })).not.toBeInTheDocument()
+  })
+
+  it('offers Not sure, move on for a word already skipped, collecting a blank', async () => {
+    const user = userEvent.setup()
+    const onCollect = vi.fn()
+    render(
+      <Practice
+        {...defaultProps}
+        onSkip={() => {}}
+        onCollect={onCollect}
+        skippedWords={['apple']}
+      />
+    )
+    expect(screen.queryByRole('button', { name: /skip for now/i })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /not sure, move on/i }))
+    expect(onCollect).toHaveBeenCalledWith('')
+  })
+
+  it('completes with a blank when left blank on the last word', async () => {
+    const user = userEvent.setup()
+    const onComplete = vi.fn()
+    render(
+      <Practice
+        {...defaultProps}
+        words={['apple', 'banana', 'cherry']}
+        collectedWords={['appel', 'banan']}
+        onSkip={() => {}}
+        onComplete={onComplete}
+        skippedWords={['cherry']}
+      />
+    )
+    await user.click(screen.getByRole('button', { name: /not sure, move on/i }))
+    expect(onComplete).toHaveBeenCalledWith(['appel', 'banan', ''])
+  })
+
+  it('does not pass blank answers to the theme visualization', () => {
+    const Viz = vi.fn(() => null)
+    render(
+      <Practice {...defaultProps} collectedWords={['appel', '']} ThemeVisualization={Viz} />
+    )
+    expect(Viz.mock.calls[0][0]).toEqual({ collectedWords: ['appel'], latestIndex: -1 })
+  })
+
   // Back/quit button tests
   it('shows quit practice button when onBack is provided', () => {
     render(<Practice {...defaultProps} onBack={() => {}} />)

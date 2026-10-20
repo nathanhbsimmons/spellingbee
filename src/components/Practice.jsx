@@ -33,7 +33,7 @@ function sentenceForSpeech(sentence, word) {
   return sentence.replace(/_{2,}/g, word)
 }
 
-export default function Practice({ words, sentences = {}, collectedWords, onCollect, onComplete, onBack, ThemeVisualization, mode = 'standard' }) {
+export default function Practice({ words, sentences = {}, collectedWords, onCollect, onComplete, onBack, onSkip, skippedWords = [], ThemeVisualization, mode = 'standard' }) {
   const currentIndex = collectedWords.length
   const isLastWord = currentIndex === words.length - 1
   const [typed, setTyped] = useState('')
@@ -54,16 +54,26 @@ export default function Practice({ words, sentences = {}, collectedWords, onColl
     }
   }, [currentIndex]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  function handleNext() {
-    if (typed.trim().length === 0) return
-
-    const trimmed = typed.trim()
-    onCollect(trimmed)
+  function submit(value) {
+    onCollect(value)
     setTyped('')
 
     if (isLastWord) {
-      onComplete([...collectedWords, trimmed])
+      onComplete([...collectedWords, value])
     } else if (autoPlay && supported && !blocked) {
+      speak(words[currentIndex + 1])
+    }
+  }
+
+  function handleNext() {
+    if (typed.trim().length === 0) return
+    submit(typed.trim())
+  }
+
+  function handleSkip() {
+    onSkip()
+    setTyped('')
+    if (autoPlay && supported && !blocked) {
       speak(words[currentIndex + 1])
     }
   }
@@ -80,6 +90,10 @@ export default function Practice({ words, sentences = {}, collectedWords, onColl
 
   const currentWord = words[currentIndex]
   const currentSentence = sentences[currentWord]
+  const visibleCollected = collectedWords.filter(Boolean)
+  const alreadySkipped = skippedWords.includes(currentWord)
+  const canSkip = onSkip && !isLastWord && !alreadySkipped
+  const canLeaveBlank = alreadySkipped
   const maskedSentence = currentSentence && maskSentence(currentSentence, currentWord)
 
   return (
@@ -221,6 +235,17 @@ export default function Practice({ words, sentences = {}, collectedWords, onColl
         {isLastWord ? 'Finish Collecting' : 'Next Word'}
       </button>
 
+      {(canSkip || canLeaveBlank) && (
+        <button
+          type="button"
+          onClick={canSkip ? handleSkip : () => submit('')}
+          className="mt-3 w-full text-indigo-500 text-sm font-medium py-2 rounded-xl
+                     hover:bg-indigo-50 transition-colors"
+        >
+          {canSkip ? 'Skip for now' : 'Not sure, move on'}
+        </button>
+      )}
+
       <EncouragingMessage currentIndex={currentIndex} />
 
       {onBack && (
@@ -236,8 +261,8 @@ export default function Practice({ words, sentences = {}, collectedWords, onColl
     {ThemeVisualization && (
       <div className="lg:sticky lg:top-4">
         <ThemeVisualization
-          collectedWords={collectedWords}
-          latestIndex={collectedWords.length - 1}
+          collectedWords={visibleCollected}
+          latestIndex={collectedWords[collectedWords.length - 1] ? visibleCollected.length - 1 : -1}
         />
       </div>
     )}

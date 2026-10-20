@@ -81,7 +81,7 @@ export default function Complete({ words, collectedWords, onStartOver, ThemeVisu
 
         {ThemeVisualization && (
           <ThemeVisualization
-            collectedWords={words.map((_, i) => getTyped(i))}
+            collectedWords={words.map((_, i) => getTyped(i)).filter(Boolean)}
             latestIndex={-1}
           />
         )}
