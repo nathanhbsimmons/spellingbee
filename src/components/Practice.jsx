@@ -185,7 +185,7 @@ export default function Practice({ words, sentences = {}, collectedWords, onColl
         )}
         {blocked && (
           <p className="mt-3 text-center text-amber-600 text-sm">
-            Tap "Play Word" to turn on sound.
+            No sound yet. Check the volume and that the device is not on silent, then tap "Play Word".
           </p>
         )}
         {voices.length > 1 && (

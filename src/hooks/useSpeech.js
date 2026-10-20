@@ -55,6 +55,7 @@ export default function useSpeech() {
   const synthRef = useRef(supported ? window.speechSynthesis : null)
   // Keep a ref to the current utterance to prevent garbage collection (Chrome bug)
   const utteranceRef = useRef(null)
+  const watchdogRef = useRef(null)
 
   useEffect(() => {
     if (!supported) return
@@ -70,6 +71,7 @@ export default function useSpeech() {
     const retry = setTimeout(loadVoices, 500)
     return () => {
       clearTimeout(retry)
+      clearTimeout(watchdogRef.current)
       synth.removeEventListener?.('voiceschanged', loadVoices)
     }
   }, [supported])
@@ -88,37 +90,59 @@ export default function useSpeech() {
 
   // Must run synchronously inside the click handler: iOS Safari drops
   // speech that is queued after a timeout or outside a user gesture.
+  // iOS also fails silently (no error event), so a watchdog retries once
+  // with the default voice, then flags the page as blocked.
   const speak = useCallback(
     (text, { rate = 0.9 } = {}) => {
       if (!supported || !text) return
 
       const synth = synthRef.current
+      clearTimeout(watchdogRef.current)
       if (synth.speaking || synth.pending) synth.cancel()
       if (synth.paused) synth.resume()
 
-      const utterance = new SpeechSynthesisUtterance(text)
-      utterance.rate = rate
-      utterance.lang = selectedVoice?.lang || 'en-US'
-      if (selectedVoice) utterance.voice = selectedVoice
+      const attempt = (voice, retriesLeft) => {
+        const utterance = new SpeechSynthesisUtterance(text)
+        utterance.rate = rate
+        utterance.lang = voice?.lang || 'en-US'
+        if (voice) utterance.voice = voice
 
-      utterance.onstart = () => {
-        setBlocked(false)
-        setSpeaking(true)
-      }
-      utterance.onend = () => setSpeaking(false)
-      utterance.onerror = (e) => {
-        setSpeaking(false)
-        if (e?.error === 'not-allowed') setBlocked(true)
+        let started = false
+        utterance.onstart = () => {
+          started = true
+          clearTimeout(watchdogRef.current)
+          setBlocked(false)
+          setSpeaking(true)
+        }
+        utterance.onend = () => setSpeaking(false)
+        utterance.onerror = (e) => {
+          setSpeaking(false)
+          if (e?.error === 'not-allowed') setBlocked(true)
+        }
+
+        utteranceRef.current = utterance
+        synth.speak(utterance)
+
+        watchdogRef.current = setTimeout(() => {
+          if (started) return
+          synth.cancel()
+          if (retriesLeft > 0) {
+            attempt(null, retriesLeft - 1)
+          } else {
+            setSpeaking(false)
+            setBlocked(true)
+          }
+        }, 1500)
       }
 
-      utteranceRef.current = utterance
-      synth.speak(utterance)
+      attempt(selectedVoice, 1)
     },
     [supported, selectedVoice],
   )
 
   const stop = useCallback(() => {
     if (supported) {
+      clearTimeout(watchdogRef.current)
       synthRef.current.cancel()
       setSpeaking(false)
     }
